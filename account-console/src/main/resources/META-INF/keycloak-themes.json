@@ -1,0 +1,6 @@
+{
+  "themes": [{
+    "name" : "learning-layers-account",
+    "types": [ "account" ]
+  }]
+}
