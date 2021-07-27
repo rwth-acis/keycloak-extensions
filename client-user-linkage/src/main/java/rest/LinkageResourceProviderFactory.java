@@ -8,7 +8,6 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
 
 public class LinkageResourceProviderFactory implements RealmResourceProviderFactory {
 
-    // http://localhost:8080/auth/realms/klaus/apis/extensions/userclients/clients
     // http://localhost:8080/auth/realms/klaus/userClientAdministration/
     public static final String ID = "userClientAdministration";
 

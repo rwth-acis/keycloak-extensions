@@ -1,6 +1,5 @@
 package rest;
 
-import com.google.gson.Gson;
 import jpa.ClientUserLink;
 import org.jboss.logging.Logger;
 import org.keycloak.common.util.Time;
@@ -21,6 +20,7 @@ import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 
+import javax.json.Json;
 import javax.persistence.EntityManager;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -31,8 +31,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-// TODO: enable authentication again
+class AdminTokenParams {
+    private String adminToken;
 
+    public String getAdminToken() {
+        return adminToken;
+    }
+}
+
+// TODO: remove all loggin stuff
 public class LinkageResource {
 
     private static final Logger log = Logger.getLogger(LinkageResourceProvider.class);
@@ -62,9 +69,14 @@ public class LinkageResource {
         String userId = auth.getUser().getId();
         log.info("User " + userId + " tried to request its clients");
 
-        List<String> clientIds = getClientIds(userId);
-        log.info("Found clients: " + clientIds.toString());
-        return Response.status(Response.Status.OK).entity(clientIds).build();
+        List<ClientRepresentation> clients = getUserClients(userId);
+        // for logging:
+        List<String> clientIdsForDebugging = new LinkedList<>();
+        for(ClientRepresentation cli : clients) {
+            clientIdsForDebugging.add(cli.getClientId());
+        }
+        log.info("Found clients: " + clientIdsForDebugging);
+        return Response.status(Response.Status.OK).entity(clients).build();
     }
 
     /**
@@ -181,7 +193,7 @@ public class LinkageResource {
             log.error("Could not remove client " + clientId + " from the realm");
             return badRequest("Could not remove client " +  clientId);
         }
-        getEntityManager().createNamedQuery("deleteClientAndLinkage").setParameter("idClient", intClientId);
+        getEntityManager().createNamedQuery("deleteClientAndLinkage").setParameter("idClient", intClientId).executeUpdate();
         return Response.status(Response.Status.OK).entity("client " + clientId + " deleted successfully").build();
     }
 
@@ -195,16 +207,17 @@ public class LinkageResource {
      */
     @POST
     @Path("/client/access")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public Response addUserToClient(String adminTok) {
-        if(adminTok.equals("")) {
+    public Response addUserToClient(AdminTokenParams adminTokenInfo) {
+        if(adminTokenInfo == null || adminTokenInfo.getAdminToken().equals("")) {
             return badRequest("no administration token given");
         }
         if(auth == null) {
             return forbidden();
         }
 
+        String adminTok = adminTokenInfo.getAdminToken();
         log.info("User " + auth.getUser().getUsername() + " creates linkage with administration token " + adminTok);
         // verification of the token
         DefaultTokenManager tokManager = new DefaultTokenManager(session);
@@ -232,10 +245,9 @@ public class LinkageResource {
      * @return HTTP 200
      */
     @DELETE
-    @Path("/client/access")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Path("/client/access/{clientId}")
     @Produces(MediaType.TEXT_PLAIN)
-    public Response removeUserFromClient(String clientId) {
+    public Response removeUserFromClient(@PathParam("clientId") String clientId) {
         if(clientId.equals("")) {
             return badRequest("no clientId given");
         }
@@ -298,21 +310,25 @@ public class LinkageResource {
     }
 
     /**
-     * Returns the IDs of the clients that are linked to the user.
+     * Returns the clientRepresentation of the clients that are linked to the user.
      *
      * @param userId userID of the linked user
-     * @return List of IDs of clients that are linked to the user (NOT clientIds!!!)
+     * @return List of ClientRepresentation
      */
-    // TODO: Fix problems if found client was deleted via admin console and the loop throws a nullPointer exception
-    private List<String> getClientIds(String userId){
+    // TODO: [ENHANCEMENT] delete the linkage of the user with the client if one id was not found
+    private List<ClientRepresentation> getUserClients(String userId){
         List<String> ids = getEntityManager()
                 .createNamedQuery("findUserClients", String.class)
                 .setParameter("userId", userId)
                 .getResultList();
-        List<String> clients = new LinkedList<>();
-        log.info("Found clients for user: " + ids);
+        List<ClientRepresentation> clients = new LinkedList<>();
         for(String id : ids){
-            clients.add(session.clientStorageManager().getClientById(session.getContext().getRealm(), id).getClientId());
+            ClientModel cli = session.clientStorageManager().getClientById(session.getContext().getRealm(), id);
+            if(cli != null) {
+                clients.add(ModelToRepresentation.toRepresentation(cli, session));
+            } else {
+                log.info("No client was found for id " + id + ". It might be deleted by an admin via the admin console");
+            }
         }
         return clients;
     }
