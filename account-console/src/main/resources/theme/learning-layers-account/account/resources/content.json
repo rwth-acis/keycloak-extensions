@@ -66,5 +66,13 @@
     "modulePath": "/content/learning-layers-account/UserClientPage.js",
     "componentName": "UserClientPage",
     "hidden": false
+  },
+  {
+    "id": "client-page",
+    "path": "userClients/client",
+    "label": "client",
+    "modulePath": "/content/learning-layers-account/ManageClientPage.js",
+    "componentName": "ManageClientPage",
+    "hidden": true
   }
 ]

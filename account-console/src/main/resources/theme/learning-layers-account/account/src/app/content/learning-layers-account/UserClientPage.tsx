@@ -16,9 +16,11 @@ import { AccountServiceContext } from '../../account-service/AccountServiceConte
 import { HttpResponse } from '../../account-service/account.service'
 import {ExternalLinkAltIcon, MinusCircleIcon, TrashIcon} from "@patternfly/react-icons";
 import {ContentAlert} from "../ContentAlert";
+import {Link} from "react-router-dom";
 
 // can be found at /keycloak.v2/account/index.ftl
 declare const authUrl: string;
+declare const baseUrl: string;
 declare const realm: string;
 
 export interface ClientsPageProps {
@@ -103,6 +105,11 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
         })
     }
 
+    // private handleManageClient(clientId: string) {
+    //     let url = baseUrl + 'userClients/client'
+    //     window.open()
+    // }
+
     // TODO: set correct window.open() link
     public render(): React.ReactNode {
         return (
@@ -159,15 +166,22 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
                                     <DataListItemCells
                                         dataListCells={[
                                             <DataListCell id={this.elementId('id', client)} width={2} key={'id-' + appIndex}>
-                                                <Button component="a" variant="link" onClick={() => window.open('https://tenor.com/8F2P.gif')}>
+                                                <Link to={{
+                                                    pathname: '/client',
+                                                    state: { clientId: client.clientId },
+                                                }}>
                                                     { client.clientId }
-                                                </Button>
+                                                </Link>
+
+                                                {/*<Button component="a" variant="link" onClick={() => this.handleManageClient(client.clientId)}>*/}
+                                                {/*    { client.clientId }*/}
+                                                {/*</Button>*/}
                                             </DataListCell>,
                                             <DataListCell id={this.elementId('name', client)} width={2} key={'name-' + appIndex}>
-                                                { client.name || '' }
+                                                { client.name || '---' }
                                             </DataListCell>,
                                             <DataListCell id={this.elementId('description', client)} width={2} key={'description-' + appIndex}>
-                                                { client.description || ''}
+                                                { client.description || '---'}
                                             </DataListCell>,
                                             <DataListCell id={this.elementId('delete', client)} width={1} key={'delete-' + appIndex}>
                                                 <Button component="a" variant="danger" onClick={() => this.handleDeleteClient(client.clientId)}>
