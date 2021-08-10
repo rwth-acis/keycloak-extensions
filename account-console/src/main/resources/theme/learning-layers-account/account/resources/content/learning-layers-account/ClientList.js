@@ -2,12 +2,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 import * as React from "../../../../common/keycloak/web_modules/react.js";
 import { Button, DataList, DataListCell, DataListItem, DataListItemCells, DataListItemRow, DataListToggle, Grid, GridItem } from "../../../../common/keycloak/web_modules/@patternfly/react-core.js";
-import { ContentPage } from "../ContentPage.js";
 import { Msg } from "../../widgets/Msg.js";
 import { AccountServiceContext } from "../../account-service/AccountServiceContext.js";
 import { MinusCircleIcon, TrashIcon } from "../../../../common/keycloak/web_modules/@patternfly/react-icons.js";
 import { ContentAlert } from "../ContentAlert.js";
-export class UserClientPage extends React.Component {
+export class ClientList extends React.Component {
   constructor(props, context) {
     super(props);
 
@@ -79,10 +78,7 @@ export class UserClientPage extends React.Component {
 
 
   render() {
-    return React.createElement(ContentPage, {
-      title: "personalClientTitle",
-      introMessage: "personalClientDescription"
-    }, React.createElement(Grid, null, React.createElement(GridItem, {
+    return React.createElement("div", null, React.createElement(Grid, null, React.createElement(GridItem, {
       offset: 12
     }, React.createElement(Button, {
       id: "create-btn",
@@ -178,5 +174,5 @@ export class UserClientPage extends React.Component {
 
 }
 
-_defineProperty(UserClientPage, "contextType", AccountServiceContext);
-//# sourceMappingURL=UserClientPage.js.map
+_defineProperty(ClientList, "contextType", AccountServiceContext);
+//# sourceMappingURL=ClientList.js.map

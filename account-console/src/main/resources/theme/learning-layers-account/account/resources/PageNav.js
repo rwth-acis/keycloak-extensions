@@ -33,6 +33,11 @@ class PageNavigation extends React.Component {
 
       if (itemPath === currentPath) {
         return item;
+      } // added so that the manage client page is shown active correctly
+
+
+      if (item.id == 'manage-client' || currentPath.split('/')[currentPath.length - 2] === 'client') {
+        return item;
       }
     }
 
