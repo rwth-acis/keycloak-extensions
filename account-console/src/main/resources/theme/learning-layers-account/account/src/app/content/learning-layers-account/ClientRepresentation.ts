@@ -19,14 +19,14 @@ export interface ClientRepresentation {
     adminUrl?: string;
     webOrigins?: string[];
 
-    defaultClientScopes: string[];
+    defaultClientScopes: string[]; //TODO: in next section
     optionalClientScopes: string[];
 
     attributes: {
         "backchannel.logout.url"?: string;
-        "backchannel.logout.session.required"?: string;
-        "backchannel.logout.revoke.offline.tokens"?: string;
-        "oauth2.device.authorization.grant.enabled"?: string;
+        "backchannel.logout.session.required"?: string; //actually bool
+        "backchannel.logout.revoke.offline.tokens"?: string; //actually bool
+        "oauth2.device.authorization.grant.enabled"?: string; //actually bool -> message clientOauth2DeviceEnabled
 
         "access.token.lifespan"?: string;
         "client.session.idle.timeout"?: string;
