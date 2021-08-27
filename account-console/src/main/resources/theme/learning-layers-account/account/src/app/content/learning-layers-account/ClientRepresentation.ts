@@ -1,9 +1,10 @@
 
 export interface ClientRepresentation {
+    id?: string;
     clientId: string;
     name?: string;
     description?: string;
-    secret: string;
+    secret?: string;
     enabled: boolean;
     alwaysDisplayInConsole: boolean;
     consentRequired: boolean;
@@ -17,16 +18,16 @@ export interface ClientRepresentation {
     redirectUris: string[];
     baseUrl?: string;
     adminUrl?: string;
-    webOrigins?: string[];
+    webOrigins: string[];
 
-    defaultClientScopes: string[]; //TODO: in next section
-    optionalClientScopes: string[];
+    // defaultClientScopes: string[]; //TODO: Add scope definition
+    // optionalClientScopes: string[];
 
     attributes: {
         "backchannel.logout.url"?: string;
         "backchannel.logout.session.required"?: string; //actually bool
         "backchannel.logout.revoke.offline.tokens"?: string; //actually bool
-        "oauth2.device.authorization.grant.enabled"?: string; //actually bool -> message clientOauth2DeviceEnabled
+        "oauth2.device.authorization.grant.enabled"?: string; //actually bool
 
         "access.token.lifespan"?: string;
         "client.session.idle.timeout"?: string;

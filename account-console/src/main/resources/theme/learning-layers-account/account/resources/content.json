@@ -66,7 +66,7 @@
       {
         "id": "user-clients-list",
         "path": "userClients",
-        "label": "User-Client-List",
+        "label": "User-Client List",
         "modulePath": "/content/learning-layers-account/UserClientPage.js",
         "componentName": "UserClientPage"
       },
@@ -74,7 +74,7 @@
         "id": "manage-client",
         "path": "userClients/client",
         "urlParameter": "/:id?",
-        "label": "Create-Client",
+        "label": "Create Client",
         "modulePath": "/content/learning-layers-account/ManageClientPage.js",
         "componentName": "ManageClientPage"
       }

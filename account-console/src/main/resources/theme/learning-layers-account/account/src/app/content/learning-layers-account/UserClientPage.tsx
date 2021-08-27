@@ -1,13 +1,14 @@
 import * as React from 'react';
 import {
+    ActionGroup,
     Button,
     Card,
     CardBody, DataList, DataListCell, DataListContent, DataListItem, DataListItemCells, DataListItemRow, DataListToggle,
     EmptyState,
     EmptyStateBody,
-    EmptyStateVariant, Form,
+    EmptyStateVariant, Form, FormGroup,
     Grid,
-    GridItem,
+    GridItem, TextArea, TextInput,
     Title
 } from '@patternfly/react-core';
 import { ContentPage } from '../ContentPage'
@@ -28,6 +29,8 @@ export interface ClientsPageProps {
 export interface ClientsPageState {
     // isRowOpen already here for later use and expanding the list of clients
     isRowOpen: boolean[];
+    tokenInputEnabled: boolean;
+    adminTok: string;
     clients: Client[];
 }
 
@@ -47,6 +50,8 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
         this.context = context;
         this.state = {
             isRowOpen: [],
+            tokenInputEnabled: false,
+            adminTok: '',
             clients: []
         };
 
@@ -61,6 +66,8 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
             const clients = response.data || [];
             this.setState({
                 isRowOpen: new Array(clients.length).fill(false),
+                tokenInputEnabled: false,
+                adminTok: '',
                 clients: clients
             });
         });
@@ -70,15 +77,8 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
         return `application-${item}-${client.clientId}`;
     }
 
-    // maybe useless, might deleted but currently creates link to request client information of given client
-    private getClientManagementLink(clientId: string): string {
-        return authUrl + 'realms/' + realm + '/userClientAdministration/client/' + clientId;
-    }
-
-    // TODO: create
     private handleCreate() {
         return window.location.hash = 'userClients/client'
-        //window.open('https://tenor.com/8F2P.gif');
     }
 
     private handleDeleteClient(clientId: string) {
@@ -94,7 +94,7 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
     }
 
     private handleUnlinkClient(clientId: string) {
-        let url = authUrl + 'realms/' + realm + '/userClientAdministration/client/access/' + clientId;
+        let url = authUrl + 'realms/' + realm + '/userClientAdministration/access/' + clientId;
         this.context!.doDelete(url).then((response: HttpResponse) => {
             if (response.ok) {
                 this.fetchClients();
@@ -106,23 +106,99 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
     }
 
     private handleManageClient(clientId: string) {
-        // browserHistory.push
-        // let url = baseUrl + 'userClients/client'
-        // window.open()
         window.location.hash = 'userClients/client/' + clientId;
     }
 
-    // TODO: set correct window.open() link
+    private handleAddClient = (event: React.FormEvent<HTMLFormElement>): void => {
+        event.preventDefault();
+        const form = event.target as HTMLFormElement;
+        const isValid = form.checkValidity();
+        if (isValid && this.state.adminTok != '') {
+            let url = authUrl + 'realms/' + realm + '/userClientAdministration/access';
+            this.context!.doPost<HttpResponse>(url, {adminToken: this.state.adminTok})
+                .then((response: HttpResponse) => {
+                    if(response.ok) {
+                        this.fetchClients();
+                        ContentAlert.success(Msg.localize('successfullClientCreation'));
+                    } else {
+                        ContentAlert.warning('Could not link client.\n' + response.status + ' ' + response.statusText);
+                    }
+                });
+        } else {
+            ContentAlert.warning('Given administration token invalid.');
+        }
+
+    }
+
+    private handleChangeAdminTok = (value: string, event: React.FormEvent<HTMLInputElement>) => {
+        const target = event.currentTarget;
+        const name = target.name;
+
+        this.setState({
+            adminTok: value
+        });
+    }
+
+    private toggleLinkClient = () => {
+        this.setState({
+            tokenInputEnabled: !this.state.tokenInputEnabled,
+            adminTok: '',
+        })
+    }
+
     public render(): React.ReactNode {
         return (
             <ContentPage title="personalClientTitle" introMessage="personalClientDescription">
                 <Grid>
-                    <GridItem offset={12}>
+                    <GridItem offset={11} span={1}>
+                        <Button id="add-client-btn" variant="control" onClick={this.toggleLinkClient}>
+                            <Msg msgKey="doAddClient" />
+                        </Button>
+                    </GridItem>
+                    <GridItem offset={12} span={1}>
                         <Button id="create-btn" variant="control" onClick={this.handleCreate}>
                             <Msg msgKey="doCreateClient" />
                         </Button>
                     </GridItem>
                 </Grid>
+                {this.state.tokenInputEnabled && (
+                    <React.Fragment>
+                        <Form isHorizontal onSubmit={event => this.handleAddClient(event)}>
+                            <FormGroup label={Msg.localize('adminToken')}
+                                       fieldId='admin-token'
+                            >
+                                <TextInput
+                                    type='text'
+                                    id='admin-token'
+                                    name='adminTok'
+                                    value={this.state.adminTok}
+                                    onChange={this.handleChangeAdminTok}
+                                />
+                                <Grid>
+                                    <GridItem span={1}>
+                                        <Button
+                                            type="submit"
+                                            id="add-client-btn"
+                                            variant="primary"
+                                        >
+                                            <Msg msgKey="doAddClient" />
+                                        </Button>
+                                    </GridItem>
+                                    <GridItem offset={1} span={1}>
+                                        <Button
+                                            id='clear-tok-field-btn'
+                                            variant='tertiary'
+                                            onClick={() => this.setState({ adminTok: ''})}
+                                        >
+                                            <Msg msgKey='doClearTokenField' />
+                                        </Button>
+                                    </GridItem>
+                                </Grid>
+                            </FormGroup>
+                        </Form>
+                        <div className="pf-c-divider pf-m-vertical pf-m-inset-md" role="separator"> </div>
+                    </React.Fragment>
+                )}
                 <DataList id="client-list" aria-label="Clients" isCompact>
                     <DataListItem id="client-list-header" aria-labelledby="Column names">
                         <DataListItemRow>
@@ -146,11 +222,15 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
                                         <strong><Msg msgKey='clientDescription' /></strong>
                                     </DataListCell>,
                                     <DataListCell key='client-list-client-delete-header' width={1}>
-                                        <strong><Msg msgKey='clientDelete'/></strong>
+                                        <Grid>
+                                            <GridItem span={6}>
+                                                <strong><Msg msgKey='clientUnlink'/></strong>
+                                            </GridItem>
+                                            <GridItem span={6}>
+                                                <strong><Msg msgKey='clientDelete'/></strong>
+                                            </GridItem>
+                                        </Grid>
                                     </DataListCell>,
-                                    <DataListCell key='client-list-client-unlink-header' width={1}>
-                                        <strong><Msg msgKey='clientUnlink'/></strong>
-                                    </DataListCell>
                                 ]}
                             />
                         </DataListItemRow>
@@ -171,12 +251,6 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
                                                 <Button component="a" variant="link" onClick={() => this.handleManageClient(client.clientId)}>
                                                     { client.clientId }
                                                 </Button>
-                                                {/*<Link to={{*/}
-                                                {/*    pathname: '/userClients/client',*/}
-                                                {/*    state: client.clientId*/}
-                                                {/*}}>*/}
-                                                {/*    { client.clientId }*/}
-                                                {/*</Link>*/}
                                             </DataListCell>,
                                             <DataListCell id={this.elementId('name', client)} width={2} key={'name-' + appIndex}>
                                                 { client.name || '---' }
@@ -185,14 +259,18 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
                                                 { client.description || '---'}
                                             </DataListCell>,
                                             <DataListCell id={this.elementId('delete', client)} width={1} key={'delete-' + appIndex}>
-                                                <Button component="a" variant="danger" onClick={() => this.handleDeleteClient(client.clientId)}>
-                                                    <TrashIcon/>
-                                                </Button>
-                                            </DataListCell>,
-                                            <DataListCell id={this.elementId('unlink', client)} width={1} key={'unlink-' + appIndex}>
-                                                <Button component="a" variant="secondary" onClick={() => this.handleUnlinkClient(client.clientId)}>
-                                                    <MinusCircleIcon/>
-                                                </Button>
+                                                <Grid>
+                                                    <GridItem span={6}>
+                                                        <Button component="a" variant="secondary" onClick={() => this.handleUnlinkClient(client.clientId)}>
+                                                            <MinusCircleIcon/>
+                                                        </Button>
+                                                    </GridItem>
+                                                    <GridItem span={6}>
+                                                        <Button component="a" variant="danger" onClick={() => this.handleDeleteClient(client.clientId)}>
+                                                            <TrashIcon/>
+                                                        </Button>
+                                                    </GridItem>
+                                                </Grid>
                                             </DataListCell>
                                         ]}
                                     />

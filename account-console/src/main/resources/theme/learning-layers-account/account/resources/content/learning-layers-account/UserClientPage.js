@@ -1,7 +1,7 @@
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 import * as React from "../../../../common/keycloak/web_modules/react.js";
-import { Button, DataList, DataListCell, DataListItem, DataListItemCells, DataListItemRow, DataListToggle, Grid, GridItem } from "../../../../common/keycloak/web_modules/@patternfly/react-core.js";
+import { Button, DataList, DataListCell, DataListItem, DataListItemCells, DataListItemRow, DataListToggle, Form, FormGroup, Grid, GridItem, TextInput } from "../../../../common/keycloak/web_modules/@patternfly/react-core.js";
 import { ContentPage } from "../ContentPage.js";
 import { Msg } from "../../widgets/Msg.js";
 import { AccountServiceContext } from "../../account-service/AccountServiceContext.js";
@@ -13,9 +13,48 @@ export class UserClientPage extends React.Component {
 
     _defineProperty(this, "context", void 0);
 
+    _defineProperty(this, "handleAddClient", event => {
+      event.preventDefault();
+      const form = event.target;
+      const isValid = form.checkValidity();
+
+      if (isValid && this.state.adminTok != '') {
+        let url = authUrl + 'realms/' + realm + '/userClientAdministration/access';
+        this.context.doPost(url, {
+          adminToken: this.state.adminTok
+        }).then(response => {
+          if (response.ok) {
+            this.fetchClients();
+            ContentAlert.success(Msg.localize('successfullClientCreation'));
+          } else {
+            ContentAlert.warning('Could not link client.\n' + response.status + ' ' + response.statusText);
+          }
+        });
+      } else {
+        ContentAlert.warning('Given administration token invalid.');
+      }
+    });
+
+    _defineProperty(this, "handleChangeAdminTok", (value, event) => {
+      const target = event.currentTarget;
+      const name = target.name;
+      this.setState({
+        adminTok: value
+      });
+    });
+
+    _defineProperty(this, "toggleLinkClient", () => {
+      this.setState({
+        tokenInputEnabled: !this.state.tokenInputEnabled,
+        adminTok: ''
+      });
+    });
+
     this.context = context;
     this.state = {
       isRowOpen: [],
+      tokenInputEnabled: false,
+      adminTok: '',
       clients: []
     };
     this.fetchClients();
@@ -27,6 +66,8 @@ export class UserClientPage extends React.Component {
       const clients = response.data || [];
       this.setState({
         isRowOpen: new Array(clients.length).fill(false),
+        tokenInputEnabled: false,
+        adminTok: '',
         clients: clients
       });
     });
@@ -34,16 +75,10 @@ export class UserClientPage extends React.Component {
 
   elementId(item, client) {
     return `application-${item}-${client.clientId}`;
-  } // maybe useless, might deleted but currently creates link to request client information of given client
-
-
-  getClientManagementLink(clientId) {
-    return authUrl + 'realms/' + realm + '/userClientAdministration/client/' + clientId;
-  } // TODO: create
-
+  }
 
   handleCreate() {
-    return window.location.hash = 'userClients/client'; //window.open('https://tenor.com/8F2P.gif');
+    return window.location.hash = 'userClients/client';
   }
 
   handleDeleteClient(clientId) {
@@ -59,7 +94,7 @@ export class UserClientPage extends React.Component {
   }
 
   handleUnlinkClient(clientId) {
-    let url = authUrl + 'realms/' + realm + '/userClientAdministration/client/access/' + clientId;
+    let url = authUrl + 'realms/' + realm + '/userClientAdministration/access/' + clientId;
     this.context.doDelete(url).then(response => {
       if (response.ok) {
         this.fetchClients();
@@ -71,26 +106,66 @@ export class UserClientPage extends React.Component {
   }
 
   handleManageClient(clientId) {
-    // browserHistory.push
-    // let url = baseUrl + 'userClients/client'
-    // window.open()
     window.location.hash = 'userClients/client/' + clientId;
-  } // TODO: set correct window.open() link
-
+  }
 
   render() {
     return React.createElement(ContentPage, {
       title: "personalClientTitle",
       introMessage: "personalClientDescription"
     }, React.createElement(Grid, null, React.createElement(GridItem, {
-      offset: 12
+      offset: 11,
+      span: 1
+    }, React.createElement(Button, {
+      id: "add-client-btn",
+      variant: "control",
+      onClick: this.toggleLinkClient
+    }, React.createElement(Msg, {
+      msgKey: "doAddClient"
+    }))), React.createElement(GridItem, {
+      offset: 12,
+      span: 1
     }, React.createElement(Button, {
       id: "create-btn",
       variant: "control",
       onClick: this.handleCreate
     }, React.createElement(Msg, {
       msgKey: "doCreateClient"
-    })))), React.createElement(DataList, {
+    })))), this.state.tokenInputEnabled && React.createElement(React.Fragment, null, React.createElement(Form, {
+      isHorizontal: true,
+      onSubmit: event => this.handleAddClient(event)
+    }, React.createElement(FormGroup, {
+      label: Msg.localize('adminToken'),
+      fieldId: "admin-token"
+    }, React.createElement(TextInput, {
+      type: "text",
+      id: "admin-token",
+      name: "adminTok",
+      value: this.state.adminTok,
+      onChange: this.handleChangeAdminTok
+    }), React.createElement(Grid, null, React.createElement(GridItem, {
+      span: 1
+    }, React.createElement(Button, {
+      type: "submit",
+      id: "add-client-btn",
+      variant: "primary"
+    }, React.createElement(Msg, {
+      msgKey: "doAddClient"
+    }))), React.createElement(GridItem, {
+      offset: 1,
+      span: 1
+    }, React.createElement(Button, {
+      id: "clear-tok-field-btn",
+      variant: "tertiary",
+      onClick: () => this.setState({
+        adminTok: ''
+      })
+    }, React.createElement(Msg, {
+      msgKey: "doClearTokenField"
+    })))))), React.createElement("div", {
+      className: "pf-c-divider pf-m-vertical pf-m-inset-md",
+      role: "separator"
+    }, " ")), React.createElement(DataList, {
       id: "client-list",
       "aria-label": "Clients",
       isCompact: true
@@ -124,14 +199,15 @@ export class UserClientPage extends React.Component {
       }))), React.createElement(DataListCell, {
         key: "client-list-client-delete-header",
         width: 1
-      }, React.createElement("strong", null, React.createElement(Msg, {
-        msgKey: "clientDelete"
-      }))), React.createElement(DataListCell, {
-        key: "client-list-client-unlink-header",
-        width: 1
+      }, React.createElement(Grid, null, React.createElement(GridItem, {
+        span: 6
       }, React.createElement("strong", null, React.createElement(Msg, {
         msgKey: "clientUnlink"
-      })))]
+      }))), React.createElement(GridItem, {
+        span: 6
+      }, React.createElement("strong", null, React.createElement(Msg, {
+        msgKey: "clientDelete"
+      })))))]
     }))), this.state.clients.map((client, appIndex) => {
       return React.createElement(DataListItem, {
         id: this.elementId("client-id", client),
@@ -159,19 +235,19 @@ export class UserClientPage extends React.Component {
           id: this.elementId('delete', client),
           width: 1,
           key: 'delete-' + appIndex
-        }, React.createElement(Button, {
-          component: "a",
-          variant: "danger",
-          onClick: () => this.handleDeleteClient(client.clientId)
-        }, React.createElement(TrashIcon, null))), React.createElement(DataListCell, {
-          id: this.elementId('unlink', client),
-          width: 1,
-          key: 'unlink-' + appIndex
+        }, React.createElement(Grid, null, React.createElement(GridItem, {
+          span: 6
         }, React.createElement(Button, {
           component: "a",
           variant: "secondary",
           onClick: () => this.handleUnlinkClient(client.clientId)
-        }, React.createElement(MinusCircleIcon, null)))]
+        }, React.createElement(MinusCircleIcon, null))), React.createElement(GridItem, {
+          span: 6
+        }, React.createElement(Button, {
+          component: "a",
+          variant: "danger",
+          onClick: () => this.handleDeleteClient(client.clientId)
+        }, React.createElement(TrashIcon, null)))))]
       })));
     })));
   }
