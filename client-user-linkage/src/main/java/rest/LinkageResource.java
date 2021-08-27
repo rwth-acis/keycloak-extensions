@@ -21,6 +21,7 @@ import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.persistence.EntityManager;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -30,16 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
-class AdminTokenParams {
-    private String adminToken;
-
-    public String getAdminToken() {
-        return adminToken;
-    }
-}
-
-// TODO: remove all loggin stuff
 public class LinkageResource {
 
     private static final Logger log = Logger.getLogger(LinkageResourceProvider.class);
@@ -67,23 +58,23 @@ public class LinkageResource {
         }
 
         String userId = auth.getUser().getId();
-        log.info("User " + userId + " tried to request its clients");
 
         List<ClientRepresentation> clients = getUserClients(userId);
-        // for logging:
-        List<String> clientIdsForDebugging = new LinkedList<>();
-        for(ClientRepresentation cli : clients) {
-            clientIdsForDebugging.add(cli.getClientId());
-        }
-        log.info("Found clients: " + clientIdsForDebugging);
+//        DEBUGGING
+//        List<String> clientIdsForDebugging = new LinkedList<>();
+//        for(ClientRepresentation cli : clients) {
+//            clientIdsForDebugging.add(cli.getClientId());
+//        }
+//        log.info("Found clients: " + clientIdsForDebugging);
         return Response.status(Response.Status.OK).entity(clients).build();
     }
 
     /**
-     * Requests the client representation of the given clientId, which contains all information of the client
+     * Requests the client representation of the given clientId, which contains all information of the client and in
+     * addition the administration token
      *
      * @param clientId clientId of the client of which the representation should be given
-     * @return ClientRepresentation of the client specified by clientId
+     * @return ClientResponse containing the administration token and the client representation of the given client id
      */
     @GET
     @Path("/client/{clientId}")
@@ -96,13 +87,14 @@ public class LinkageResource {
             return forbidden();
         }
 
-        ClientModel client = session.clientLocalStorage().getClientByClientId(session.getContext().getRealm(), clientId);
-        log.info("User " + auth.getUser().getUsername() + " requested client " + client.getClientId());
+        ClientModel client = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientId);
         ClientRepresentation rep = ModelToRepresentation.toRepresentation(client, session);
         rep.setSecret(client.getSecret());
         rep.setRegistrationAccessToken(client.getRegistrationToken());
+        String adminTok = getAdminTok(auth.getUser().getId(), rep.getId());
+        ClientResponse response = new ClientResponse(adminTok, rep);
 
-        return Response.status(Response.Status.OK).entity(rep).build();
+        return Response.status(Response.Status.OK).entity(response).build();
     }
 
     /**
@@ -113,56 +105,69 @@ public class LinkageResource {
      * @return the administration token that gives user access to the client
      */
     @POST
-    @Path("/client/create")
+    @Path("/create")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     public Response createClient(ClientRepresentation clientRep) {
         if(auth == null) {
             return forbidden();
         }
-        if(clientRep.getClientId().equals("") || clientRep.getRedirectUris().isEmpty() ) {
-            return badRequest("please choose at least a clientId and one redirect URI");
+        if(clientRep.getClientId().equals("")) {
+            return badRequest("clientId required");
         }
         if(session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientRep.getClientId()) != null) {
-            return badRequest("clientId already in use. Select a different one");
+            return conflict("Client ID already in use. Select a different one");
+        }
+        if(clientRep.getSecret() == null || clientRep.getSecret().equals("")){
+            clientRep.setSecret(KeycloakModelUtils.generateCodeSecret());
         }
         // add new client
         ClientModel newClient = RepresentationToModel.createClient(session, session.getContext().getRealm(), clientRep);
         Set<ClientScopeModel> scopes = session.getContext().getRealm().getDefaultClientScopesStream(true).collect(Collectors.toSet());
         newClient.addClientScopes(scopes, true);
-        log.info("User " + auth.getUser().getUsername() + " creates client " + newClient.getClientId());
 
         // create new entry in CLIENT_USER_LINKAGE table
         String adminTok = generateAdminTok(newClient.getId());
         addClientUserLink(clientRep.getId(), auth.getUser().getId(), adminTok);
-        return Response.status(Response.Status.OK).entity(adminTok).build();
+        return Response.status(Response.Status.OK).entity("Successfully created Client " + newClient.getClientId()).build();
     }
 
     /**
      * Changes settings of the client with the given clientId. Can also change the clientID, but not the internal id of
      * the client.
      *
-     * @param clientId clientId of the client which should be changed
+     * @param intClientId internal id of the client which should be changed
      * @param clientRep clientRepresentation that contains the settings which should be changed. Does not have to contain
      *                  settings that should not be changed
      * @return HTTP 200
      */
     @POST
-    @Path("/client/{clientId}")
+    @Path("/client/{intClientId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response changeClient(@PathParam("clientId") String clientId, ClientRepresentation  clientRep) {
-        if(clientId.equals("")){
+    public Response changeClient(@PathParam("intClientId") String intClientId, ClientRepresentation  clientRep) {
+        if(intClientId.equals("")){
             return badRequest("no client id given in request");
         }
-        if(auth == null || !userHasAccess(auth.getUser().getId(), clientId)) {
+        if(!intClientId.equals(clientRep.getId())){
+            return badRequest("the client representation does not belong to the specified client in the path param.");
+        }
+
+        /*
+        getClientByClientId() is used here instead of getClientById(), because otherwise the change will not be synchronized with the admin console.
+        We have to use this workaround for getting the clientId by using the internal id of the client, to be able to change the client id of the client
+         */
+        ClientModel oldClient = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(),
+                session.clientStorageManager().getClientById(session.getContext().getRealm(), intClientId).getClientId());
+        if(auth == null || !userHasAccess(auth.getUser().getId(), oldClient.getClientId())) {
             return forbidden();
         }
-        log.info("Client " + clientId + " will be changed.");
-        ClientModel oldClient = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientId);
         RepresentationToModel.updateClient(clientRep, oldClient);
 
         ClientModel updatedClient = session.clientLocalStorage().getClientByClientId(session.getContext().getRealm(), clientRep.getClientId());
+        if (clientRep.getAttributes().get("pkce.code.challenge.method") != null && clientRep.getAttributes().get("pkce.code.challenge.method").equals("none")) {
+            updatedClient.removeAttribute("pkce.code.challenge.method");
+        }
         ClientRepresentation newRep = ModelToRepresentation.toRepresentation(updatedClient, session);
         newRep.setSecret(updatedClient.getSecret());
         newRep.setRegistrationAccessToken(updatedClient.getRegistrationToken());
@@ -186,11 +191,9 @@ public class LinkageResource {
         if(auth == null || !userHasAccess(auth.getUser().getId(), clientId)) {
             return forbidden();
         }
-        log.info("Client " + clientId + " will be removed");
         String intClientId = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientId).getId();
         boolean removed = session.clientStorageManager().removeClient(session.getContext().getRealm(), intClientId);
         if(!removed) {
-            log.error("Could not remove client " + clientId + " from the realm");
             return badRequest("Could not remove client " +  clientId);
         }
         getEntityManager().createNamedQuery("deleteClientAndLinkage").setParameter("idClient", intClientId).executeUpdate();
@@ -201,12 +204,12 @@ public class LinkageResource {
      * Creates a Linkage between the current user and the client that is specified in the administration token. The
      * administration token was created and issued during the creation of a client
      *
-     * @param adminTok administration token that grants the user access to a client and contains the internal client id
+     * @param adminTokenInfo administration token that grants the user access to a client and contains the internal client id
      *                 of the client
      * @return HTTP 200
      */
     @POST
-    @Path("/client/access")
+    @Path("/access")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public Response addUserToClient(AdminTokenParams adminTokenInfo) {
@@ -218,23 +221,22 @@ public class LinkageResource {
         }
 
         String adminTok = adminTokenInfo.getAdminToken();
-        log.info("User " + auth.getUser().getUsername() + " creates linkage with administration token " + adminTok);
+
         // verification of the token
         DefaultTokenManager tokManager = new DefaultTokenManager(session);
         JsonWebToken tok = tokManager.decode(adminTok, JsonWebToken.class);
         if(tok == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+            return conflict("invalid token");
         }
         String intClientId = tok.getAudience()[0];
         if(!tok.getIssuer().equals(session.getContext().getAuthServerUrl().toASCIIString()) ||
                 tok.getIat() > Time.currentTime() ||
                 session.clientStorageManager().getClientById(session.getContext().getRealm(), intClientId) == null
         ) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+            return conflict("invalid token");
         }
 
         addClientUserLink(intClientId, auth.getUser().getId(), adminTok);
-        log.info("Created new user-client linkage between user " + auth.getUser().getUsername() + " and client with id " + intClientId);
         return Response.status(Response.Status.OK).entity("You got access to client " + intClientId).build();
     }
 
@@ -245,7 +247,7 @@ public class LinkageResource {
      * @return HTTP 200
      */
     @DELETE
-    @Path("/client/access/{clientId}")
+    @Path("/access/{clientId}")
     @Produces(MediaType.TEXT_PLAIN)
     public Response removeUserFromClient(@PathParam("clientId") String clientId) {
         if(clientId.equals("")) {
@@ -258,7 +260,6 @@ public class LinkageResource {
         getEntityManager().createNamedQuery("removeLinkage")
                 .setParameter("userId", auth.getUser().getId())
                 .setParameter("idClient", intClientId).executeUpdate();
-        log.info("Deleted user-client linkage between user " + auth.getUser().getUsername() + " and client " + clientId);
         return Response.status(Response.Status.OK).entity("You has removed client " + clientId + " from your list of clients").build();
     }
 
@@ -284,7 +285,6 @@ public class LinkageResource {
                 .type("JWT")
                 .jsonContent(adminTok)
                 .sign(sign);
-        log.info("Generated new administration token for client with id " + intClientId);
         return signedTok;
     }
 
@@ -315,7 +315,6 @@ public class LinkageResource {
      * @param userId userID of the linked user
      * @return List of ClientRepresentation
      */
-    // TODO: [ENHANCEMENT] delete the linkage of the user with the client if one id was not found
     private List<ClientRepresentation> getUserClients(String userId){
         List<String> ids = getEntityManager()
                 .createNamedQuery("findUserClients", String.class)
@@ -327,10 +326,19 @@ public class LinkageResource {
             if(cli != null) {
                 clients.add(ModelToRepresentation.toRepresentation(cli, session));
             } else {
-                log.info("No client was found for id " + id + ". It might be deleted by an admin via the admin console");
+                // TODO: [ENHANCEMENT] delete the linkage of the user with the client if one id was not found, e.g. if it was deleted by an admin via admin console
             }
         }
         return clients;
+    }
+
+    private String getAdminTok(String userId, String intClientId) {
+        String tok = getEntityManager()
+                .createNamedQuery("getAdminTok", String.class)
+                .setParameter("userId", userId)
+                .setParameter("idClient", intClientId)
+                .getSingleResult();
+        return tok;
     }
 
     /**
@@ -351,6 +359,11 @@ public class LinkageResource {
         return session.getProvider(JpaConnectionProvider.class).getEntityManager();
     }
 
+    private Response conflict(String errorMessage){
+        JsonObject rsp = Json.createObjectBuilder().add("errorMessage", errorMessage).build();
+        return Response.status(Response.Status.CONFLICT).entity(rsp).build();
+    }
+
     private Response badRequest(String string){
         return Response.status(Response.Status.BAD_REQUEST).entity(string).build();
     }
@@ -359,5 +372,15 @@ public class LinkageResource {
         return Response.status(Response.Status.FORBIDDEN).build();
     }
 
+}
 
+/**
+ * Class for parsing admin token of http request send by user to class
+ */
+class AdminTokenParams {
+    private String adminToken;
+
+    public String getAdminToken() {
+        return adminToken;
+    }
 }

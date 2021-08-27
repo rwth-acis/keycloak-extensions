@@ -13,7 +13,8 @@ import javax.persistence.*;
 @NamedQueries({ @NamedQuery(name = "findUserClients", query = "select link.idClient from ClientUserLink link where link.userId = :userId"),
         @NamedQuery(name = "checkLinkage", query = "select link.idClient from ClientUserLink link where link.userId = :userId and link.idClient = :idClient"),
         @NamedQuery(name = "deleteClientAndLinkage", query = "delete from ClientUserLink link where link.idClient = :idClient"),
-        @NamedQuery(name = "removeLinkage", query = "delete from ClientUserLink link where link.userId = :userId and link.idClient = :idClient")
+        @NamedQuery(name = "removeLinkage", query = "delete from ClientUserLink link where link.userId = :userId and link.idClient = :idClient"),
+        @NamedQuery(name= "getAdminTok", query = "select link.adminToken from ClientUserLink link where link.userId = :userId and link.idClient = :idClient")
 })
 public class ClientUserLink {
 
