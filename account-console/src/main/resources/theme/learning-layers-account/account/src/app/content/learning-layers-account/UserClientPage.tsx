@@ -1,23 +1,17 @@
 import * as React from 'react';
 import {
-    ActionGroup,
     Button,
-    Card,
-    CardBody, DataList, DataListCell, DataListContent, DataListItem, DataListItemCells, DataListItemRow, DataListToggle,
-    EmptyState,
-    EmptyStateBody,
-    EmptyStateVariant, Form, FormGroup,
+    DataList, DataListCell, DataListItem, DataListItemCells, DataListItemRow, DataListToggle,
+    Form, FormGroup,
     Grid,
-    GridItem, TextArea, TextInput,
-    Title
+    GridItem, TextInput,
 } from '@patternfly/react-core';
 import { ContentPage } from '../ContentPage'
 import { Msg } from '../../widgets/Msg'
 import { AccountServiceContext } from '../../account-service/AccountServiceContext';
 import { HttpResponse } from '../../account-service/account.service'
-import {ExternalLinkAltIcon, MinusCircleIcon, TrashIcon} from "@patternfly/react-icons";
+import {AngleUpIcon, MinusCircleIcon, TrashIcon} from "@patternfly/react-icons";
 import {ContentAlert} from "../ContentAlert";
-import {Link, Route, RouteComponentProps} from "react-router-dom";
 
 // can be found at /keycloak.v2/account/index.ftl
 declare const authUrl: string;
@@ -27,6 +21,8 @@ export interface ClientsPageProps {
 }
 
 export interface ClientsPageState {
+    isUnlinkEnabled: boolean[];
+    isDeleteEnabled: boolean[];
     // isRowOpen already here for later use and expanding the list of clients
     isRowOpen: boolean[];
     tokenInputEnabled: boolean;
@@ -49,6 +45,8 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
         super(props);
         this.context = context;
         this.state = {
+            isUnlinkEnabled: [],
+            isDeleteEnabled: [],
             isRowOpen: [],
             tokenInputEnabled: false,
             adminTok: '',
@@ -65,6 +63,8 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
         this.context!.doGet<Client[]>(url).then((response: HttpResponse<Client[]>) => {
             const clients = response.data || [];
             this.setState({
+                isUnlinkEnabled: new Array(clients.length).fill(false),
+                isDeleteEnabled: new Array(clients.length).fill(false),
                 isRowOpen: new Array(clients.length).fill(false),
                 tokenInputEnabled: false,
                 adminTok: '',
@@ -81,28 +81,45 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
         return window.location.hash = 'userClients/client'
     }
 
-    private handleDeleteClient(clientId: string) {
-        let url = authUrl + 'realms/' + realm + '/userClientAdministration/client/' + clientId;
-        this.context!.doDelete(url).then((response: HttpResponse) => {
-            if(response.ok) {
-                this.fetchClients();
-                ContentAlert.success('Client successfully deleted');
-            } else {
-                ContentAlert.warning('Client could not be deleted.\n' +  response.status + ' ' + response.statusText);
-            }
-        })
+    private handleDeleteClient(clientId: string, index: number) {
+        if (this.state.isDeleteEnabled[index]){
+            let url = authUrl + 'realms/' + realm + '/userClientAdministration/client/' + clientId;
+            this.context!.doDelete(url).then((response: HttpResponse) => {
+                if(response.ok) {
+                    this.fetchClients();
+                    ContentAlert.success('Client successfully deleted');
+                } else {
+                    ContentAlert.warning('Client could not be deleted.\n' +  response.status + ' ' + response.statusText);
+                }
+            })
+        } else {
+            let tmp = new Array(this.state.clients.length).fill(false);
+            tmp[index] = true;
+            this.setState({
+                isDeleteEnabled: tmp
+            })
+        }
+
     }
 
-    private handleUnlinkClient(clientId: string) {
-        let url = authUrl + 'realms/' + realm + '/userClientAdministration/access/' + clientId;
-        this.context!.doDelete(url).then((response: HttpResponse) => {
-            if (response.ok) {
-                this.fetchClients();
-                ContentAlert.success('Client successfully unlinked from you');
-            } else {
-                ContentAlert.warning('Client could not be unlinked.\n' + response.status + ' ' + response.statusText);
-            }
-        })
+    private handleUnlinkClient(clientId: string, index: number) {
+        if (this.state.isUnlinkEnabled[index]){
+            let url = authUrl + 'realms/' + realm + '/userClientAdministration/access/' + clientId;
+            this.context!.doDelete(url).then((response: HttpResponse) => {
+                if (response.ok) {
+                    this.fetchClients();
+                    ContentAlert.success('Client successfully unlinked from you');
+                } else {
+                    ContentAlert.warning('Client could not be unlinked.\n' + response.status + ' ' + response.statusText);
+                }
+            })
+        } else {
+            let tmp = new Array(this.state.clients.length).fill(false);
+            tmp[index] = true;
+            this.setState({
+                isUnlinkEnabled: tmp
+            })
+        }
     }
 
     private handleManageClient(clientId: string) {
@@ -261,14 +278,54 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
                                             <DataListCell id={this.elementId('delete', client)} width={1} key={'delete-' + appIndex}>
                                                 <Grid>
                                                     <GridItem span={6}>
-                                                        <Button component="a" variant="secondary" onClick={() => this.handleUnlinkClient(client.clientId)}>
-                                                            <MinusCircleIcon/>
-                                                        </Button>
+                                                        <Grid>
+                                                            {this.state.isUnlinkEnabled[appIndex] && (
+                                                                <GridItem span={12}>
+                                                                    <p style={{color: 'red'}}>
+                                                                        <Msg msgKey="deleteClientWarning" />
+                                                                    </p>
+                                                                </GridItem>
+                                                            )}
+                                                            <GridItem span={6}>
+                                                                <Button component="a" variant="secondary" onClick={() => this.handleUnlinkClient(client.clientId, appIndex)}>
+                                                                    <MinusCircleIcon/>
+                                                                </Button>
+                                                            </GridItem>
+                                                            {this.state.isUnlinkEnabled[appIndex] && (
+                                                                <GridItem span={6}>
+                                                                    <Button component="a" variant="tertiary" onClick={() => this.setState({
+                                                                        isUnlinkEnabled: new Array(this.state.clients.length).fill(false)
+                                                                    })}>
+                                                                        <AngleUpIcon/>
+                                                                    </Button>
+                                                                </GridItem>
+                                                            )}
+                                                        </Grid>
                                                     </GridItem>
                                                     <GridItem span={6}>
-                                                        <Button component="a" variant="danger" onClick={() => this.handleDeleteClient(client.clientId)}>
-                                                            <TrashIcon/>
-                                                        </Button>
+                                                        <Grid>
+                                                            {this.state.isDeleteEnabled[appIndex] && (
+                                                                <GridItem span={12} >
+                                                                    <p style={{color: 'red'}}>
+                                                                        <Msg msgKey="deleteClientWarning" />
+                                                                    </p>
+                                                                </GridItem>
+                                                            )}
+                                                            <GridItem span={6}>
+                                                                <Button component="a" variant="danger" onClick={() => this.handleDeleteClient(client.clientId, appIndex)}>
+                                                                    <TrashIcon/>
+                                                                </Button>
+                                                            </GridItem>
+                                                            {this.state.isDeleteEnabled[appIndex] && (
+                                                                <GridItem span={6}>
+                                                                    <Button component="a" variant="tertiary" onClick={() => this.setState({
+                                                                        isDeleteEnabled: new Array(this.state.clients.length).fill(false)
+                                                                    })}>
+                                                                        <AngleUpIcon/>
+                                                                    </Button>
+                                                                </GridItem>
+                                                            )}
+                                                        </Grid>
                                                     </GridItem>
                                                 </Grid>
                                             </DataListCell>

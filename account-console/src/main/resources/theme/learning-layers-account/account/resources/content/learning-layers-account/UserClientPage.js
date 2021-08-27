@@ -5,8 +5,9 @@ import { Button, DataList, DataListCell, DataListItem, DataListItemCells, DataLi
 import { ContentPage } from "../ContentPage.js";
 import { Msg } from "../../widgets/Msg.js";
 import { AccountServiceContext } from "../../account-service/AccountServiceContext.js";
-import { MinusCircleIcon, TrashIcon } from "../../../../common/keycloak/web_modules/@patternfly/react-icons.js";
-import { ContentAlert } from "../ContentAlert.js";
+import { AngleUpIcon, MinusCircleIcon, TrashIcon } from "../../../../common/keycloak/web_modules/@patternfly/react-icons.js";
+import { ContentAlert } from "../ContentAlert.js"; // can be found at /keycloak.v2/account/index.ftl
+
 export class UserClientPage extends React.Component {
   constructor(props, context) {
     super(props);
@@ -52,6 +53,8 @@ export class UserClientPage extends React.Component {
 
     this.context = context;
     this.state = {
+      isUnlinkEnabled: [],
+      isDeleteEnabled: [],
       isRowOpen: [],
       tokenInputEnabled: false,
       adminTok: '',
@@ -65,6 +68,8 @@ export class UserClientPage extends React.Component {
     this.context.doGet(url).then(response => {
       const clients = response.data || [];
       this.setState({
+        isUnlinkEnabled: new Array(clients.length).fill(false),
+        isDeleteEnabled: new Array(clients.length).fill(false),
         isRowOpen: new Array(clients.length).fill(false),
         tokenInputEnabled: false,
         adminTok: '',
@@ -81,28 +86,44 @@ export class UserClientPage extends React.Component {
     return window.location.hash = 'userClients/client';
   }
 
-  handleDeleteClient(clientId) {
-    let url = authUrl + 'realms/' + realm + '/userClientAdministration/client/' + clientId;
-    this.context.doDelete(url).then(response => {
-      if (response.ok) {
-        this.fetchClients();
-        ContentAlert.success('Client successfully deleted');
-      } else {
-        ContentAlert.warning('Client could not be deleted.\n' + response.status + ' ' + response.statusText);
-      }
-    });
+  handleDeleteClient(clientId, index) {
+    if (this.state.isDeleteEnabled[index]) {
+      let url = authUrl + 'realms/' + realm + '/userClientAdministration/client/' + clientId;
+      this.context.doDelete(url).then(response => {
+        if (response.ok) {
+          this.fetchClients();
+          ContentAlert.success('Client successfully deleted');
+        } else {
+          ContentAlert.warning('Client could not be deleted.\n' + response.status + ' ' + response.statusText);
+        }
+      });
+    } else {
+      let tmp = new Array(this.state.clients.length).fill(false);
+      tmp[index] = true;
+      this.setState({
+        isDeleteEnabled: tmp
+      });
+    }
   }
 
-  handleUnlinkClient(clientId) {
-    let url = authUrl + 'realms/' + realm + '/userClientAdministration/access/' + clientId;
-    this.context.doDelete(url).then(response => {
-      if (response.ok) {
-        this.fetchClients();
-        ContentAlert.success('Client successfully unlinked from you');
-      } else {
-        ContentAlert.warning('Client could not be unlinked.\n' + response.status + ' ' + response.statusText);
-      }
-    });
+  handleUnlinkClient(clientId, index) {
+    if (this.state.isUnlinkEnabled[index]) {
+      let url = authUrl + 'realms/' + realm + '/userClientAdministration/access/' + clientId;
+      this.context.doDelete(url).then(response => {
+        if (response.ok) {
+          this.fetchClients();
+          ContentAlert.success('Client successfully unlinked from you');
+        } else {
+          ContentAlert.warning('Client could not be unlinked.\n' + response.status + ' ' + response.statusText);
+        }
+      });
+    } else {
+      let tmp = new Array(this.state.clients.length).fill(false);
+      tmp[index] = true;
+      this.setState({
+        isUnlinkEnabled: tmp
+      });
+    }
   }
 
   handleManageClient(clientId) {
@@ -237,17 +258,53 @@ export class UserClientPage extends React.Component {
           key: 'delete-' + appIndex
         }, React.createElement(Grid, null, React.createElement(GridItem, {
           span: 6
+        }, React.createElement(Grid, null, this.state.isUnlinkEnabled[appIndex] && React.createElement(GridItem, {
+          span: 12
+        }, React.createElement("p", {
+          style: {
+            color: 'red'
+          }
+        }, React.createElement(Msg, {
+          msgKey: "deleteClientWarning"
+        }))), React.createElement(GridItem, {
+          span: 6
         }, React.createElement(Button, {
           component: "a",
           variant: "secondary",
-          onClick: () => this.handleUnlinkClient(client.clientId)
-        }, React.createElement(MinusCircleIcon, null))), React.createElement(GridItem, {
+          onClick: () => this.handleUnlinkClient(client.clientId, appIndex)
+        }, React.createElement(MinusCircleIcon, null))), this.state.isUnlinkEnabled[appIndex] && React.createElement(GridItem, {
+          span: 6
+        }, React.createElement(Button, {
+          component: "a",
+          variant: "tertiary",
+          onClick: () => this.setState({
+            isUnlinkEnabled: new Array(this.state.clients.length).fill(false)
+          })
+        }, React.createElement(AngleUpIcon, null))))), React.createElement(GridItem, {
+          span: 6
+        }, React.createElement(Grid, null, this.state.isDeleteEnabled[appIndex] && React.createElement(GridItem, {
+          span: 12
+        }, React.createElement("p", {
+          style: {
+            color: 'red'
+          }
+        }, React.createElement(Msg, {
+          msgKey: "deleteClientWarning"
+        }))), React.createElement(GridItem, {
           span: 6
         }, React.createElement(Button, {
           component: "a",
           variant: "danger",
-          onClick: () => this.handleDeleteClient(client.clientId)
-        }, React.createElement(TrashIcon, null)))))]
+          onClick: () => this.handleDeleteClient(client.clientId, appIndex)
+        }, React.createElement(TrashIcon, null))), this.state.isDeleteEnabled[appIndex] && React.createElement(GridItem, {
+          span: 6
+        }, React.createElement(Button, {
+          component: "a",
+          variant: "tertiary",
+          onClick: () => this.setState({
+            isDeleteEnabled: new Array(this.state.clients.length).fill(false)
+          })
+        }, React.createElement(AngleUpIcon, null)))))))]
       })));
     })));
   }

@@ -57,7 +57,7 @@ export const emptyClientFields = {
     "client.offline.session.idle.timeout": '',
     "client.offline.session.max.lifespan": '',
     "tls.client.certificate.bound.access.tokens": '',
-    "pkce.code.challenge.method": 'none',
+    "pkce.code.challenge.method": undefined,
     "use.refresh.tokens": 'true',
     "client_credentials.use_refresh_token": 'false',
     "exclude.session.state.from.auth.response": 'false'
