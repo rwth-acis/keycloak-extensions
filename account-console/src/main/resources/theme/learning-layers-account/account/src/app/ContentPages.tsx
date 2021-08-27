@@ -26,6 +26,7 @@ export interface ContentItem {
     label: string;
     labelParams?: string[];
     hidden?: string;
+    urlParameter?: string; // extension for client creation
     groupId: string; // computed value
     itemId: string; // computed value
 };
@@ -159,10 +160,20 @@ export function makeRoutes(): React.ReactNode {
     const routes: React.ReactElement<Route>[] = pageDefs.map((page: PageDef) => {
         if (isModulePageDef(page)) {
             const node: React.ReactNode = React.createElement(page.module[page.componentName], {'pageDef': page});
-            return <Route key={page.itemId} path={'/' + page.path} exact render={() => node} />;
+            // extension for client creation
+            if(page.urlParameter !== undefined) {
+                return <Route key={page.itemId} path={'/' + page.path + page.urlParameter} render={() => node} />;
+            } else {
+                return <Route key={page.itemId} path={'/' + page.path} exact render={() => node}/>;
+            }
         } else {
             const pageDef: ComponentPageDef = page as ComponentPageDef;
-            return <Route key={page.itemId} path={'/' + page.path} exact component={pageDef.component}/>;
+            // extension for client creation
+            if(page.urlParameter !== undefined) {
+                return <Route key={page.itemId} path={'/' + page.path + page.urlParameter} component={pageDef.component} />;
+            } else {
+                return <Route key={page.itemId} path={'/' + page.path} exact component={pageDef.component}/>;
+            }
         }
     });
 

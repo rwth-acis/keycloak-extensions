@@ -6,7 +6,6 @@
         <setting name="validation-enabled" value="true" />
         <setting name="provider-name" value="Hibernate" />
         <datasource-mapping>
-          <factory-entry name="client-user-linkage" />
           <factory-entry name="keycloak-default" />
         </datasource-mapping>
         <naming-strategy-map />

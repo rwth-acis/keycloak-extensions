@@ -130,21 +130,39 @@ export function makeRoutes() {
     if (isModulePageDef(page)) {
       const node = React.createElement(page.module[page.componentName], {
         'pageDef': page
-      });
-      return React.createElement(Route, {
-        key: page.itemId,
-        path: '/' + page.path,
-        exact: true,
-        render: () => node
-      });
+      }); // extension for client creation
+
+      if (page.urlParameter !== undefined) {
+        return React.createElement(Route, {
+          key: page.itemId,
+          path: '/' + page.path + page.urlParameter,
+          render: () => node
+        });
+      } else {
+        return React.createElement(Route, {
+          key: page.itemId,
+          path: '/' + page.path,
+          exact: true,
+          render: () => node
+        });
+      }
     } else {
-      const pageDef = page;
-      return React.createElement(Route, {
-        key: page.itemId,
-        path: '/' + page.path,
-        exact: true,
-        component: pageDef.component
-      });
+      const pageDef = page; // extension for client creation
+
+      if (page.urlParameter !== undefined) {
+        return React.createElement(Route, {
+          key: page.itemId,
+          path: '/' + page.path + page.urlParameter,
+          component: pageDef.component
+        });
+      } else {
+        return React.createElement(Route, {
+          key: page.itemId,
+          path: '/' + page.path,
+          exact: true,
+          component: pageDef.component
+        });
+      }
     }
   });
   return React.createElement(Switch, null, routes, React.createElement(Route, {
