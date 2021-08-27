@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>client-user-linkage</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>14.0.0</version>
     <packaging>jar</packaging>
     <name>client-user-linkage</name>
     <description>link of clients with users</description>
