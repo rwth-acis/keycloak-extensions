@@ -139,7 +139,7 @@ export class ApplicationsPage extends React.Component {
         lg: 12
       }, React.createElement("div", {
         className: "pf-c-content"
-      }, React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('client') + ': '), " ", application.clientId), application.description && React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('description') + ': '), " ", application.description), React.createElement(GridItem, null, React.createElement("strong", null, "URL: "), " ", React.createElement("span", {
+      }, React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('client') + ': '), " ", application.clientId), application.description && React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('description') + ': '), " ", application.description), application.effectiveUrl && React.createElement(GridItem, null, React.createElement("strong", null, "URL: "), " ", React.createElement("span", {
         id: this.elementId('effectiveurl', application)
       }, application.effectiveUrl.split('"'))), application.consent && React.createElement(React.Fragment, null, React.createElement(GridItem, {
         span: 12

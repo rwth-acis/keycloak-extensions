@@ -5,12 +5,12 @@
     <parent>
         <groupId>tech4comp</groupId>
         <artifactId>keycloak-extensions</artifactId>
-        <version>14.0.0</version>
+        <version>15.0.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>client-user-linkage</artifactId>
-    <version>14.0.0</version>
+    <version>15.0.2</version>
     <packaging>jar</packaging>
     <name>client-user-linkage</name>
     <description>link of clients with users</description>
