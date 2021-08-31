@@ -96,7 +96,8 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
             let tmp = new Array(this.state.clients.length).fill(false);
             tmp[index] = true;
             this.setState({
-                isDeleteEnabled: tmp
+                isDeleteEnabled: tmp,
+                isUnlinkEnabled: new Array(this.state.clients.length).fill(false),
             })
         }
 
@@ -117,7 +118,8 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
             let tmp = new Array(this.state.clients.length).fill(false);
             tmp[index] = true;
             this.setState({
-                isUnlinkEnabled: tmp
+                isUnlinkEnabled: tmp,
+                isDeleteEnabled: new Array(this.state.clients.length).fill(false)
             })
         }
     }
