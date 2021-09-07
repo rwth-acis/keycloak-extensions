@@ -1,5 +1,4 @@
 # Account-Console
-This is an extension to the account console to enable the user to create and manage its own clients. It will make use of
-the client-user-linkage API extension.
-
-More information will follow soon...
+This directory contains the source files of the account console of Keycloak with an
+extension to enable to use the `client-user-linkage` REST API extension from within 
+the account console. 
