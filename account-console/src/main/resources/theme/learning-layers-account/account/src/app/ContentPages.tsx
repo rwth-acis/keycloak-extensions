@@ -151,7 +151,7 @@ export function flattenContent(pageDefs: ContentItem[]): PageDef[] {
 
     return flat;
 }
-
+//TODO: have a look at if the changes we have done here are really necessary
 export function makeRoutes(): React.ReactNode {
     if (typeof content === 'undefined') return (<span/>);
 

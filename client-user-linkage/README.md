@@ -8,6 +8,8 @@ get access to it.
 The linkage together with the administration token is stored in the database of
 Keycloak. For this, this extension creates a custom JPA entity to the database.
 
+## Basic Concept
+
 ## Build and Deploy
 The extension is deployed as a single `.jar`file. It can be build by running 
 `mvn clean install` within this directory. Currently, this extension is compiled
@@ -34,7 +36,7 @@ Additionally, a restart can indicate possible problems of the deployment.
 
 ## Usage
 For an overview and a description on how to use the added REST endpoints, please have
-a look at the Wiki pages of this repository.
+a look at the [Wiki pages](https://github.com/rwth-acis/keycloak-extensions/wiki) of this repository.
 
 ## Development
 Some notes for you if you want to add or change something of this extension:
