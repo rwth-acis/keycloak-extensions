@@ -56,8 +56,10 @@ directory `/content/learning-layers-account`.
 
 Last important file is the `/resources/content.json` file. This file describes the whole structure and components of the
 account console. Additionally, the react router is created based on the modules defined in there. So if you plan to add
-a page to the account console, it has to be specified there.
+a page to the account console, it has to be specified there.  
+
 ---
+
 If you have already deployed the extension and want to redeploy it with some changes, it might be that the changes will
 not be visible directly. This is because Keycloak caches the themes which is defined in the `standalone(-ha).xml`
 file in the `/standalone/configuration` directory. Somewhere in the lower half of the file, there should be the part
