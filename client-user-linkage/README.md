@@ -9,6 +9,22 @@ The linkage together with the administration token is stored in the database of
 Keycloak. For this, this extension creates a custom JPA entity to the database.
 
 ## Basic Concept
+The extension contains an additional table in the database, called `CLIENT_USER_LINKAGE` with the fields:
+- **ID**: A random unique id of the entry as primary key
+- **ID_CLIENT**: The internal id of the client (not the client id!) that is linked to the specific user
+- **USER_ID**: The unique id of the user entity that is linked to the client
+- **ADMIN_TOKEN**: An access token, that authorizes a user to link his account to the client
+
+Whenever a user creates a new client, a new admin token is created and stored together with the internal
+id of the client, the user id and a new unique id in the `CLIENT_USER_LINKAGE` table. The client itself
+is stored in the database as usual. If a user tries to manage one of the clients, it gets checked if he 
+is linked in the table with the requested client. Only then he is able to request client information, 
+change settings or delete the client.
+
+The `admin tokens` are JSON web tokens, with the internal client id as audience value. They can be
+used to grant other users access to a client that they do not have created. If they are used, 
+a new entry in the `CLIENT_USER_LINKAGE` table is created linking the user that has used the 
+token to the internal client id that is stored as audience in it. 
 
 ## Build and Deploy
 The extension is deployed as a single `.jar`file. It can be build by running 
@@ -47,8 +63,17 @@ the database entity with additional rows or new tables, they have to be specifie
 the `client-user-linkage-changelog.xml` file. If you want to add dependencies, they 
 have to be specified in the `jboss-deployment-structure.xml` file. 
 
-In general, we suggest testing the extension with a dockerized Keycloak instance. 
+The additional table in the database contains some named queries which might be useful:
+| **Name** | **Description** | **Parameter** | **Returns** |
+| --- | --- | --- | --- |
+| **findUserClients** | returns all internal ids of the clients that are linked to a user id | userId | idClient |
+| **checkLinkage** | checks if a given user id is linked to a given id of a client | userId, idClient | idClient |
+| **deleteClientAndLinkage** | deletes all entries in the table with the given id of the client | idClient | - |
+| **removeLinkage** | removes the linkage of the given user id with the given id of the client | userId, idClient | - |
+| **getAdminTok** | returns the admin token of a linkage in the table | userId, idClient | adminTok |
+
+One last thing: In general, we suggest developing the extension with a dockerized Keycloak instance. 
 The reason for this is that in some cases when you miss something or one of the 
 above mentioned files is not correct, Keycloak will shut down with a couple of 
 errors and will not be able to start again. In these cases, it is quite nice to 
-quickly set up a new instance by just creating a new Keycloak container.
+quickly set up a new instance by just creating a new Keycloak container. 
