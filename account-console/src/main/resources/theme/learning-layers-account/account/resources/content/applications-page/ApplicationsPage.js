@@ -134,9 +134,9 @@ export class ApplicationsPage extends React.Component {
         id: this.elementId("expandable", application),
         isHidden: !this.state.isRowOpen[appIndex]
       }, React.createElement(Grid, {
-        sm: 12,
-        md: 12,
-        lg: 12
+        sm: 6,
+        md: 6,
+        lg: 6
       }, React.createElement("div", {
         className: "pf-c-content"
       }, React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('client') + ': '), " ", application.clientId), application.description && React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('description') + ': '), " ", application.description), application.effectiveUrl && React.createElement(GridItem, null, React.createElement("strong", null, "URL: "), " ", React.createElement("span", {
@@ -149,14 +149,18 @@ export class ApplicationsPage extends React.Component {
         }, React.createElement(GridItem, {
           offset: 1
         }, React.createElement(CheckIcon, null), " ", scope.name));
-      }), React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('accessGrantedOn') + ': '), new Intl.DateTimeFormat(locale, {
+      }), application.tosUri && React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('termsOfService') + ': '), application.tosUri), application.policyUri && React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('policy') + ': '), application.policyUri), React.createElement(GridItem, null, React.createElement("strong", null, Msg.localize('accessGrantedOn') + ': '), new Intl.DateTimeFormat(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: 'numeric',
         minute: 'numeric',
         second: 'numeric'
-      }).format(application.consent.createDate))))), (application.consent || application.offlineAccess) && React.createElement(Grid, {
+      }).format(application.consent.createDate)))), application.logoUri && React.createElement("div", {
+        className: "pf-c-content"
+      }, React.createElement("img", {
+        src: application.logoUri
+      }))), (application.consent || application.offlineAccess) && React.createElement(Grid, {
         gutter: "sm"
       }, React.createElement("hr", null), React.createElement(GridItem, null, React.createElement(React.Fragment, null, React.createElement(ContinueCancelModal, {
         buttonTitle: Msg.localize('removeButton') // required
