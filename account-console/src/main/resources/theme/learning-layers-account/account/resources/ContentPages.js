@@ -122,7 +122,8 @@ export function flattenContent(pageDefs) {
   }
 
   return flat;
-}
+} //TODO: have a look at if the changes we have done here are really necessary
+
 export function makeRoutes() {
   if (typeof content === 'undefined') return React.createElement("span", null);
   const pageDefs = flattenContent(content);

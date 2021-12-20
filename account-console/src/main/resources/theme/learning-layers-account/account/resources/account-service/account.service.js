@@ -66,7 +66,7 @@ export class AccountServiceClient {
   }
 
   async doRequest(endpoint, config) {
-    const response = await fetch(this.makeUrl(endpoint, config).toString(), (await this.makeConfig(config)));
+    const response = await fetch(this.makeUrl(endpoint, config).toString(), await this.makeConfig(config));
 
     try {
       response.data = await response.json();

@@ -271,6 +271,7 @@ public class LinkageResource {
      * @param intClientId internal ID of the client for which the token should grant access
      * @return a signed token as String
      */
+    //TODO: [ENHANCEMENT] change issuer url to url that contains the realm. Would make more sense if multiple realms are in use
     private String generateAdminTok(String intClientId){
         JsonWebToken adminTok = new JsonWebToken();
         adminTok.id(KeycloakModelUtils.generateId());
@@ -349,6 +350,7 @@ public class LinkageResource {
      * @param userId userId of the user that should get management permissions
      * @param adminTok the administration token that enables a user to get permissions to the client
      */
+    //TODO: [ENHANCEMENT] User should not be able to create a linkage with a client that does not exist anymore -> add check if client exists
     private void addClientUserLink(String intClientId, String userId, String adminTok) {
         String newId = KeycloakModelUtils.generateId();
         ClientUserLink cul = new ClientUserLink(newId, intClientId, userId, adminTok);
