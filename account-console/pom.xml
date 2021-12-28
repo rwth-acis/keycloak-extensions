@@ -6,12 +6,12 @@
     <parent>
         <groupId>tech4comp</groupId>
         <artifactId>keycloak-extensions</artifactId>
-        <version>15.1.1</version>
+        <version>16.1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>account-console</artifactId>
-    <version>15.1.1</version>
+    <version>16.1.0</version>
     <packaging>jar</packaging>
     <name>account-console</name>
     <description>changes of the account console</description>

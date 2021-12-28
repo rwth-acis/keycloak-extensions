@@ -5,12 +5,12 @@
     <parent>
         <groupId>tech4comp</groupId>
         <artifactId>keycloak-extensions</artifactId>
-        <version>15.1.1</version>
+        <version>16.1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>client-user-linkage</artifactId>
-    <version>15.1.1</version>
+    <version>16.1.0</version>
     <packaging>jar</packaging>
     <name>client-user-linkage</name>
     <description>link of clients with users</description>
@@ -59,8 +59,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
             <plugin>
