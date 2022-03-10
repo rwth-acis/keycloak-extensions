@@ -5,12 +5,12 @@
     <parent>
         <groupId>tech4comp</groupId>
         <artifactId>keycloak-extensions</artifactId>
-        <version>16.1.0</version>
+        <version>17.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>client-user-linkage</artifactId>
-    <version>16.1.0</version>
+    <version>17.0.0</version>
     <packaging>jar</packaging>
     <name>client-user-linkage</name>
     <description>link of clients with users</description>
@@ -63,14 +63,14 @@
                     <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
-            <plugin>
+            <!--plugin>
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>${maven-wildfly-plugin.version}</version>
                 <configuration>
                     <skip>false</skip>
                 </configuration>
-            </plugin>
+            </plugin-->
         </plugins>
     </build>
 </project>
