@@ -244,7 +244,7 @@ export class AccountPage extends React.Component {
         marginTop: "30px"
       }
     }, React.createElement(Expandable, {
-      toggleText: "Delete Account"
+      toggleText: Msg.localize('deleteAccount')
     }, React.createElement(Grid, {
       gutter: "sm"
     }, React.createElement(GridItem, {

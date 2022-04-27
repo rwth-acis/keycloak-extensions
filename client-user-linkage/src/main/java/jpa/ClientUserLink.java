@@ -18,6 +18,8 @@ import javax.persistence.*;
 })
 public class ClientUserLink {
 
+    public ClientUserLink(){}
+
     public ClientUserLink(String id, String idClient, String userId, String adminToken){
         this.id = id;
         this.idClient = idClient;
