@@ -5,7 +5,7 @@ import {withRouter, RouteComponentProps} from 'react-router-dom';
 import {Msg} from "../../widgets/Msg";
 import {
     ActionGroup,
-    Button, ButtonVariant, Expandable,
+    Button, ButtonVariant, ExpandableSection,
     Form,
     FormGroup, Grid, GridItem, InputGroup,
     Select,
@@ -558,7 +558,7 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
                                     onToggle={this.toggleAccessType}
                                     onSelect={this.selectAccessType}
                                     selections={this.state.accessTypeSelected}
-                                    isExpanded={this.state.accessTypeExpanded}
+                                    isOpen={this.state.accessTypeExpanded}
                                 >
                                     {[
                                         <SelectOption key={0} value={accessTypes.confidential}/>,
@@ -837,7 +837,7 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
                                     onChange={this.handleAttrChange}
                                 />
                             </FormGroup>
-                            <Expandable
+                            <ExpandableSection
                                 toggleText='OpenID Connect Compatibility Modes'
                                 onToggle={() => this.onToggle(0)}
                                 isExpanded={this.state.isExtended[0]}
@@ -881,8 +881,8 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
                                         onChange={this.handleAttrChange}
                                     />
                                 </FormGroup>
-                            </Expandable>
-                            <Expandable
+                            </ExpandableSection>
+                            <ExpandableSection
                                 toggleText='Advanced Settings'
                                 onToggle={() => this.onToggle(1)}
                                 isExpanded={this.state.isExtended[1]}
@@ -986,7 +986,7 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
                                         onToggle={this.togglePKCEChallenge}
                                         onSelect={this.selectPKCEChallenge}
                                         selections={this.state.pkceChallengeSelected}
-                                        isExpanded={this.state.pkceChallengeExpanded}
+                                        isOpen={this.state.pkceChallengeExpanded}
                                     >
                                         {[
                                             <SelectOption key={0} value={pkceChallence.S256}/>,
@@ -995,7 +995,7 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
                                         ]}
                                     </Select>
                                 </FormGroup>
-                            </Expandable>
+                            </ExpandableSection>
                         </React.Fragment>
                     }
                     <ActionGroup>
