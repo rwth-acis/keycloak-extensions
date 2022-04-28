@@ -4,7 +4,7 @@ import {
     DataList, DataListCell, DataListItem, DataListItemCells, DataListItemRow, DataListToggle,
     Form, FormGroup,
     Grid,
-    GridItem, TextInput,
+    GridItem, PageSection, PageSectionVariants, Stack, TextInput,
 } from '@patternfly/react-core';
 import { ContentPage } from '../ContentPage'
 import { Msg } from '../../widgets/Msg'
@@ -168,176 +168,183 @@ export class UserClientPage extends React.Component<ClientsPageProps, ClientsPag
     public render(): React.ReactNode {
         return (
             <ContentPage title="personalClientTitle" introMessage="personalClientDescription">
-                <Grid>
-                    <GridItem offset={11} span={1}>
-                        <Button id="add-client-btn" variant="control" onClick={this.toggleLinkClient}>
-                            <Msg msgKey="doAddClient" />
-                        </Button>
-                    </GridItem>
-                    <GridItem offset={12} span={1}>
-                        <Button id="create-btn" variant="control" onClick={this.handleCreate}>
-                            <Msg msgKey="doCreateClient" />
-                        </Button>
-                    </GridItem>
-                </Grid>
-                {this.state.tokenInputEnabled && (
-                    <React.Fragment>
-                        <Form isHorizontal onSubmit={event => this.handleAddClient(event)}>
-                            <FormGroup label={Msg.localize('adminToken')}
-                                       fieldId='admin-token'
-                            >
-                                <TextInput
-                                    type='text'
-                                    id='admin-token'
-                                    name='adminTok'
-                                    value={this.state.adminTok}
-                                    onChange={this.handleChangeAdminTok}
-                                />
-                                <Grid>
-                                    <GridItem span={1}>
-                                        <Button
-                                            type="submit"
-                                            id="add-client-btn"
-                                            variant="primary"
-                                        >
-                                            <Msg msgKey="doAddClient" />
-                                        </Button>
-                                    </GridItem>
-                                    <GridItem offset={1} span={1}>
-                                        <Button
-                                            id='clear-tok-field-btn'
-                                            variant='tertiary'
-                                            onClick={() => this.setState({ adminTok: ''})}
-                                        >
-                                            <Msg msgKey='doClearTokenField' />
-                                        </Button>
-                                    </GridItem>
-                                </Grid>
-                            </FormGroup>
-                        </Form>
-                        <div className="pf-c-divider pf-m-vertical pf-m-inset-md" role="separator"> </div>
-                    </React.Fragment>
-                )}
-                <DataList id="client-list" aria-label="Clients" isCompact>
-                    <DataListItem id="client-list-header" aria-labelledby="Column names">
-                        <DataListItemRow>
-                            // invisible toggle allows headings to line up properly
-                            <span style={{ visibility: 'hidden' }}>
-                                <DataListToggle
-                                    isExpanded={false}
-                                    id='applications-list-header-invisible-toggle'
-                                    aria-controls="hidden"
-                                />
-                            </span>
-                            <DataListItemCells
-                                dataListCells={[
-                                    <DataListCell key='client-list-client-id-header' width={2}>
-                                        <strong><Msg msgKey='clientId' /></strong>
-                                    </DataListCell>,
-                                    <DataListCell key='client-list-client-name-header' width={2}>
-                                        <strong><Msg msgKey='clientName' /></strong>
-                                    </DataListCell>,
-                                    <DataListCell key='client-list-client-description-header' width={2}>
-                                        <strong><Msg msgKey='clientDescription' /></strong>
-                                    </DataListCell>,
-                                    <DataListCell key='client-list-client-delete-header' width={1}>
+                <PageSection isFilled variant={PageSectionVariants.light}>
+                    <Stack>
+                        <Grid>
+                            <GridItem offset={12} span={1}>
+                                <div style={{float: 'left'}}>
+                                    <Button id="add-client-btn" variant="control" onClick={this.toggleLinkClient}>
+                                        <Msg msgKey="doAddClient" />
+                                    </Button>
+                                </div>
+                                <div style={{float: 'right'}}>
+                                    <Button id="create-btn" variant="control" onClick={this.handleCreate}>
+                                        <Msg msgKey="doCreateClient" />
+                                    </Button>
+                                </div>
+                            </GridItem>
+                        </Grid>
+                        {this.state.tokenInputEnabled && (
+                            <React.Fragment>
+                                <Form isHorizontal onSubmit={event => this.handleAddClient(event)}>
+                                    <FormGroup label={Msg.localize('adminToken')}
+                                               fieldId='admin-token'
+                                    >
+                                        <TextInput
+                                            type='text'
+                                            id='admin-token'
+                                            name='adminTok'
+                                            value={this.state.adminTok}
+                                            onChange={this.handleChangeAdminTok}
+                                        />
                                         <Grid>
-                                            <GridItem span={6}>
-                                                <strong><Msg msgKey='clientUnlink'/></strong>
-                                            </GridItem>
-                                            <GridItem span={6}>
-                                                <strong><Msg msgKey='clientDelete'/></strong>
+                                            <GridItem offset={12} span={1}>
+                                                <div style={{float: 'left'}}>
+                                                    <Button
+                                                        id='clear-tok-field-btn'
+                                                        variant='tertiary'
+                                                        onClick={() => this.setState({ adminTok: ''})}
+                                                    >
+                                                        <Msg msgKey='doClearTokenField' />
+                                                    </Button>
+                                                </div>
+                                                <div style={{float: 'right'}}>
+                                                    <Button
+                                                        type="submit"
+                                                        id="add-client-btn"
+                                                        variant="primary"
+                                                    >
+                                                        <Msg msgKey="doAddClient" />
+                                                    </Button>
+                                                </div>
                                             </GridItem>
                                         </Grid>
-                                    </DataListCell>,
-                                ]}
-                            />
-                        </DataListItemRow>
-                    </DataListItem>
-                    {this.state.clients.map((client: Client, appIndex: number) => {
-                        return (
-                            <DataListItem id={this.elementId("client-id", client)} key={'client-' + appIndex} aria-labelledby="client-list" isExpanded={this.state.isRowOpen[appIndex]}>
+                                    </FormGroup>
+                                </Form>
+                            </React.Fragment>
+                        )}
+                        <DataList id="client-list" aria-label="Clients">
+                            <DataListItem id="client-list-header" aria-labelledby="Column names">
                                 <DataListItemRow>
-                                    {/*<DataListToggle*/}
-                                    {/*    onClick={() => this.onToggle(appIndex)}*/}
-                                    {/*    isExpanded={this.state.isRowOpen[appIndex]}*/}
-                                    {/*    id={this.elementId('toggle', application)}*/}
-                                    {/*    aria-controls={this.elementId("expandable", application)}*/}
-                                    {/*/>*/}
+                                    // invisible toggle allows headings to line up properly
+                                    <span style={{ visibility: 'hidden', height: 55 }}>
+                                        <DataListToggle
+                                            isExpanded={false}
+                                            id='applications-list-header-invisible-toggle'
+                                            aria-controls="hidden"
+                                        />
+                                    </span>
                                     <DataListItemCells
                                         dataListCells={[
-                                            <DataListCell id={this.elementId('id', client)} width={2} key={'id-' + appIndex}>
-                                                <Button component="a" variant="link" onClick={() => this.handleManageClient(client.clientId)}>
-                                                    { client.clientId }
-                                                </Button>
+                                            <DataListCell key='client-list-client-id-header' width={2} className="pf-u-pt-md">
+                                                <strong><Msg msgKey='clientId' /></strong>
                                             </DataListCell>,
-                                            <DataListCell id={this.elementId('name', client)} width={2} key={'name-' + appIndex}>
-                                                { client.name || '---' }
+                                            <DataListCell key='client-list-client-name-header' width={2} className="pf-u-pt-md">
+                                                <strong><Msg msgKey='clientName' /></strong>
                                             </DataListCell>,
-                                            <DataListCell id={this.elementId('description', client)} width={2} key={'description-' + appIndex}>
-                                                { client.description || '---'}
+                                            <DataListCell key='client-list-client-description-header' width={2} className="pf-u-pt-md">
+                                                <strong><Msg msgKey='clientDescription' /></strong>
                                             </DataListCell>,
-                                            <DataListCell id={this.elementId('delete', client)} width={1} key={'delete-' + appIndex}>
+                                            <DataListCell key='client-list-client-delete-header' width={1} className="pf-u-pt-md">
                                                 <Grid>
                                                     <GridItem span={6}>
-                                                        <Grid>
-                                                            {this.state.isUnlinkEnabled[appIndex] && (
-                                                                <GridItem span={12}>
-                                                                    <p style={{color: 'red'}}>
-                                                                        <Msg msgKey="deleteClientWarning" />
-                                                                    </p>
-                                                                </GridItem>
-                                                            )}
-                                                            <GridItem span={6}>
-                                                                <Button component="a" variant="secondary" onClick={() => this.handleUnlinkClient(client.clientId, appIndex)}>
-                                                                    <MinusCircleIcon/>
-                                                                </Button>
-                                                            </GridItem>
-                                                            {this.state.isUnlinkEnabled[appIndex] && (
-                                                                <GridItem span={6}>
-                                                                    <Button component="a" variant="tertiary" onClick={() => this.setState({
-                                                                        isUnlinkEnabled: new Array(this.state.clients.length).fill(false)
-                                                                    })}>
-                                                                        <AngleUpIcon/>
-                                                                    </Button>
-                                                                </GridItem>
-                                                            )}
-                                                        </Grid>
+                                                        <strong><Msg msgKey='clientUnlink'/></strong>
                                                     </GridItem>
                                                     <GridItem span={6}>
-                                                        <Grid>
-                                                            {this.state.isDeleteEnabled[appIndex] && (
-                                                                <GridItem span={12} >
-                                                                    <p style={{color: 'red'}}>
-                                                                        <Msg msgKey="deleteClientWarning" />
-                                                                    </p>
-                                                                </GridItem>
-                                                            )}
-                                                            <GridItem span={6}>
-                                                                <Button component="a" variant="danger" onClick={() => this.handleDeleteClient(client.clientId, appIndex)}>
-                                                                    <TrashIcon/>
-                                                                </Button>
-                                                            </GridItem>
-                                                            {this.state.isDeleteEnabled[appIndex] && (
-                                                                <GridItem span={6}>
-                                                                    <Button component="a" variant="tertiary" onClick={() => this.setState({
-                                                                        isDeleteEnabled: new Array(this.state.clients.length).fill(false)
-                                                                    })}>
-                                                                        <AngleUpIcon/>
-                                                                    </Button>
-                                                                </GridItem>
-                                                            )}
-                                                        </Grid>
+                                                        <strong><Msg msgKey='clientDelete'/></strong>
                                                     </GridItem>
                                                 </Grid>
-                                            </DataListCell>
+                                            </DataListCell>,
                                         ]}
                                     />
                                 </DataListItemRow>
                             </DataListItem>
-                        )
-                    })}
-                </DataList>
+                            {this.state.clients.map((client: Client, appIndex: number) => {
+                                return (
+                                    <DataListItem id={this.elementId("client-id", client)} key={'client-' + appIndex} aria-labelledby="client-list" isExpanded={this.state.isRowOpen[appIndex]}>
+                                        <DataListItemRow>
+                                            {/*<DataListToggle*/}
+                                            {/*    onClick={() => this.onToggle(appIndex)}*/}
+                                            {/*    isExpanded={this.state.isRowOpen[appIndex]}*/}
+                                            {/*    id={this.elementId('toggle', application)}*/}
+                                            {/*    aria-controls={this.elementId("expandable", application)}*/}
+                                            {/*/>*/}
+                                            <DataListItemCells
+                                                dataListCells={[
+                                                    <DataListCell id={this.elementId('id', client)} width={2} key={'id-' + appIndex}>
+                                                        <Button component="a" variant="link" onClick={() => this.handleManageClient(client.clientId)}>
+                                                            { client.clientId }
+                                                        </Button>
+                                                    </DataListCell>,
+                                                    <DataListCell id={this.elementId('name', client)} width={2} key={'name-' + appIndex}>
+                                                        { client.name || '---' }
+                                                    </DataListCell>,
+                                                    <DataListCell id={this.elementId('description', client)} width={2} key={'description-' + appIndex}>
+                                                        { client.description || '---'}
+                                                    </DataListCell>,
+                                                    <DataListCell id={this.elementId('delete', client)} width={1} key={'delete-' + appIndex}>
+                                                        <Grid>
+                                                            <GridItem span={6}>
+                                                                <Grid>
+                                                                    {this.state.isUnlinkEnabled[appIndex] && (
+                                                                        <GridItem span={12}>
+                                                                            <p style={{color: 'red'}}>
+                                                                                <Msg msgKey="deleteClientWarning" />
+                                                                            </p>
+                                                                        </GridItem>
+                                                                    )}
+                                                                    <GridItem span={6}>
+                                                                        <Button component="a" variant="secondary" onClick={() => this.handleUnlinkClient(client.clientId, appIndex)}>
+                                                                            <MinusCircleIcon/>
+                                                                        </Button>
+                                                                    </GridItem>
+                                                                    {this.state.isUnlinkEnabled[appIndex] && (
+                                                                        <GridItem span={6}>
+                                                                            <Button component="a" variant="tertiary" onClick={() => this.setState({
+                                                                                isUnlinkEnabled: new Array(this.state.clients.length).fill(false)
+                                                                            })}>
+                                                                                <AngleUpIcon/>
+                                                                            </Button>
+                                                                        </GridItem>
+                                                                    )}
+                                                                </Grid>
+                                                            </GridItem>
+                                                            <GridItem span={6}>
+                                                                <Grid>
+                                                                    {this.state.isDeleteEnabled[appIndex] && (
+                                                                        <GridItem span={12} >
+                                                                            <p style={{color: 'red'}}>
+                                                                                <Msg msgKey="deleteClientWarning" />
+                                                                            </p>
+                                                                        </GridItem>
+                                                                    )}
+                                                                    <GridItem span={6}>
+                                                                        <Button component="a" variant="danger" onClick={() => this.handleDeleteClient(client.clientId, appIndex)}>
+                                                                            <TrashIcon/>
+                                                                        </Button>
+                                                                    </GridItem>
+                                                                    {this.state.isDeleteEnabled[appIndex] && (
+                                                                        <GridItem span={6}>
+                                                                            <Button component="a" variant="tertiary" onClick={() => this.setState({
+                                                                                isDeleteEnabled: new Array(this.state.clients.length).fill(false)
+                                                                            })}>
+                                                                                <AngleUpIcon/>
+                                                                            </Button>
+                                                                        </GridItem>
+                                                                    )}
+                                                                </Grid>
+                                                            </GridItem>
+                                                        </Grid>
+                                                    </DataListCell>
+                                                ]}
+                                            />
+                                        </DataListItemRow>
+                                    </DataListItem>
+                                )
+                            })}
+                        </DataList>
+                    </Stack>
+                </PageSection>
             </ContentPage>
         );
     };
