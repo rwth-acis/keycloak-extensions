@@ -46,7 +46,10 @@
                 isEventsEnabled : ${isEventsEnabled?c},
                 isMyResourcesEnabled : ${(realm.userManagedAccessAllowed && isAuthorizationEnabled)?c},
                 isTotpConfigured : ${isTotpConfigured?c},
-                deleteAccountAllowed : ${deleteAccountAllowed?c}
+                deleteAccountAllowed : ${deleteAccountAllowed?c},
+                updateEmailFeatureEnabled: ${updateEmailFeatureEnabled?c},
+                updateEmailActionEnabled: ${updateEmailActionEnabled?c},
+                isViewGroupsEnabled : ${isViewGroupsEnabled?c}
             }
 
             var availableLocales = [];
@@ -105,6 +108,11 @@
         <script>
             var content = <#include "resources/content.json"/>
         </script>
+        
+        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/react-core/dist/styles/base.css"/>
+        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/react-core/dist/styles/app.css"/>
+        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/patternfly/patternfly-addons.css"/>
+        <link href="${resourceUrl}/public/layout.css" rel="stylesheet"/>
 
         <#if properties.styles?has_content>
             <#list properties.styles?split(' ') as style>
@@ -112,11 +120,7 @@
             </#list>
         </#if>
 
-        
-        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/react-core/dist/styles/base.css"/>
-        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/react-core/dist/styles/app.css"/>
-        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/patternfly/patternfly-addons.css"/>
-        <link href="${resourceUrl}/public/layout.css" rel="stylesheet"/>
+
     </head>
 
     <body>
@@ -188,7 +192,7 @@
                   <span class="pf-c-button__icon pf-m-start">
                       <i class="pf-icon pf-icon-arrow" aria-hidden="true"></i>
                   </span>
-                  ${msg("backToAdminConsole")}
+                  ${msg("backTo",referrerName)}
               </a>
             </div>
             </#if>
@@ -207,7 +211,7 @@
                     <ul id="landingMobileDropdown" aria-labelledby="landingMobileKebabButton" class="pf-c-dropdown__menu pf-m-align-right" role="menu" style="display:none">
                         <#if referrer?has_content && referrer_uri?has_content>
                         <li role="none">
-                            <a id="landingMobileReferrerLink" href="${referrer_uri}" role="menuitem" tabindex="0" aria-disabled="false" class="pf-c-dropdown__menu-item">${msg("backToAdminConsole")}</a>
+                            <a id="landingMobileReferrerLink" href="${referrer_uri}" role="menuitem" tabindex="0" aria-disabled="false" class="pf-c-dropdown__menu-item">${msg("backTo",referrerName)}</a>
                         </li>
                         </#if>
 

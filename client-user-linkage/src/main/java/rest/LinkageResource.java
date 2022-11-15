@@ -19,13 +19,15 @@ import org.keycloak.representations.JsonWebToken;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
+import org.keycloak.util.JsonSerialization;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import javax.persistence.EntityManager;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -87,7 +89,7 @@ public class LinkageResource {
             return forbidden();
         }
 
-        ClientModel client = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientId);
+        ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
         ClientRepresentation rep = ModelToRepresentation.toRepresentation(client, session);
         rep.setSecret(client.getSecret());
         rep.setRegistrationAccessToken(client.getRegistrationToken());
@@ -115,7 +117,7 @@ public class LinkageResource {
         if(clientRep.getClientId().equals("")) {
             return badRequest("clientId required");
         }
-        if(session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientRep.getClientId()) != null) {
+        if(session.clients().getClientByClientId(session.getContext().getRealm(), clientRep.getClientId()) != null) {
             return conflict("Client ID already in use. Select a different one");
         }
         if(clientRep.getSecret() == null || clientRep.getSecret().equals("")){
@@ -157,14 +159,14 @@ public class LinkageResource {
         getClientByClientId() is used here instead of getClientById(), because otherwise the change will not be synchronized with the admin console.
         We have to use this workaround for getting the clientId by using the internal id of the client, to be able to change the client id of the client
          */
-        ClientModel oldClient = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(),
-                session.clientStorageManager().getClientById(session.getContext().getRealm(), intClientId).getClientId());
+        ClientModel oldClient = session.clients().getClientByClientId(session.getContext().getRealm(),
+                session.clients().getClientById(session.getContext().getRealm(), intClientId).getClientId());
         if(auth == null || !userHasAccess(auth.getUser().getId(), oldClient.getClientId())) {
             return forbidden();
         }
-        RepresentationToModel.updateClient(clientRep, oldClient);
+        RepresentationToModel.updateClient(clientRep, oldClient, session);
 
-        ClientModel updatedClient = session.clientLocalStorage().getClientByClientId(session.getContext().getRealm(), clientRep.getClientId());
+        ClientModel updatedClient = session.clients().getClientByClientId(session.getContext().getRealm(), clientRep.getClientId());
         if (clientRep.getAttributes().get("pkce.code.challenge.method") != null && clientRep.getAttributes().get("pkce.code.challenge.method").equals("none")) {
             updatedClient.removeAttribute("pkce.code.challenge.method");
         }
@@ -191,8 +193,8 @@ public class LinkageResource {
         if(auth == null || !userHasAccess(auth.getUser().getId(), clientId)) {
             return forbidden();
         }
-        String intClientId = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientId).getId();
-        boolean removed = session.clientStorageManager().removeClient(session.getContext().getRealm(), intClientId);
+        String intClientId = session.clients().getClientByClientId(session.getContext().getRealm(), clientId).getId();
+        boolean removed = session.clients().removeClient(session.getContext().getRealm(), intClientId);
         if(!removed) {
             return badRequest("Could not remove client " +  clientId);
         }
@@ -231,7 +233,7 @@ public class LinkageResource {
         String intClientId = tok.getAudience()[0];
         if(!tok.getIssuer().equals(session.getContext().getAuthServerUrl().toASCIIString()) ||
                 tok.getIat() > Time.currentTime() ||
-                session.clientStorageManager().getClientById(session.getContext().getRealm(), intClientId) == null
+                session.clients().getClientById(session.getContext().getRealm(), intClientId) == null
         ) {
             return conflict("invalid token");
         }
@@ -246,6 +248,7 @@ public class LinkageResource {
      * @param clientId clientId of the client that should be unlinked of the current user
      * @return HTTP 200
      */
+    // TODO: [Enhancement] Check if user was only user linked to the client and remove client if so
     @DELETE
     @Path("/access/{clientId}")
     @Produces(MediaType.TEXT_PLAIN)
@@ -256,7 +259,7 @@ public class LinkageResource {
         if(auth == null || !userHasAccess(auth.getUser().getId(), clientId)) {
             return forbidden();
         }
-        String intClientId = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientId).getId();
+        String intClientId = session.clients().getClientByClientId(session.getContext().getRealm(), clientId).getId();
         getEntityManager().createNamedQuery("removeLinkage")
                 .setParameter("userId", auth.getUser().getId())
                 .setParameter("idClient", intClientId).executeUpdate();
@@ -299,7 +302,7 @@ public class LinkageResource {
      *         false if user has no permissions for this client or client does not exist
      */
     private boolean userHasAccess(String userId, String clientId) {
-        ClientModel client = session.clientStorageManager().getClientByClientId(session.getContext().getRealm(), clientId);
+        ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
         if(client == null) {
             return false;
         }
@@ -323,11 +326,15 @@ public class LinkageResource {
                 .getResultList();
         List<ClientRepresentation> clients = new LinkedList<>();
         for(String id : ids){
-            ClientModel cli = session.clientStorageManager().getClientById(session.getContext().getRealm(), id);
+            ClientModel cli = session.clients().getClientById(session.getContext().getRealm(), id);
             if(cli != null) {
                 clients.add(ModelToRepresentation.toRepresentation(cli, session));
             } else {
-                // TODO: [ENHANCEMENT] delete the linkage of the user with the client if one id was not found, e.g. if it was deleted by an admin via admin console
+                // Remove all client linkages, if the client id was not found. This can occur if the client was deleted
+                // by an admin in the admin console
+                getEntityManager().createNamedQuery("deleteClientAndLinkage")
+                        .setParameter("idClient", id)
+                        .executeUpdate();
             }
         }
         return clients;
@@ -344,13 +351,12 @@ public class LinkageResource {
 
     /**
      * Creates a new entry in the CLIENT_USER_LINKAGE table that links user with clients which they should be allowed
-     * to manage/change
+     * to manage/change. Does not check if client with given client id exist!
      *
      * @param intClientId the internal id of the client, not the clientId, to which the user should get access
      * @param userId userId of the user that should get management permissions
      * @param adminTok the administration token that enables a user to get permissions to the client
      */
-    //TODO: [ENHANCEMENT] User should not be able to create a linkage with a client that does not exist anymore -> add check if client exists
     private void addClientUserLink(String intClientId, String userId, String adminTok) {
         String newId = KeycloakModelUtils.generateId();
         ClientUserLink cul = new ClientUserLink(newId, intClientId, userId, adminTok);
@@ -362,7 +368,7 @@ public class LinkageResource {
     }
 
     private Response conflict(String errorMessage){
-        JsonObject rsp = Json.createObjectBuilder().add("errorMessage", errorMessage).build();
+        ObjectNode rsp = JsonSerialization.createObjectNode().put("errorMessage", errorMessage);
         return Response.status(Response.Status.CONFLICT).entity(rsp).build();
     }
 

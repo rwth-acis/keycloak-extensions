@@ -132,7 +132,6 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
         this.context!.doGet<ClientResponse>(url).then((response: HttpResponse<ClientResponse>) => {
             if (response.ok){
                 const responseData = response.data ||  {adminToken: '', clientRep: emptyClientFields};
-                console.log(responseData)
                 this.setState({
                     noClient: false,
                     isExtended: [false, false],
@@ -141,8 +140,6 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
                     adminToken: responseData.adminToken,
                     client: responseData.clientRep,
                 });
-                console.log("got client data:");
-                console.log(this.state)
                 if (this.state.client == emptyClientFields){
                     console.log("got no data for client")
                     ContentAlert.warning('No data was send for the client ' + clientId)
@@ -309,10 +306,8 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
         let tmpArr = [];
         switch (uriType) {
             case 'redirectUris':
-                console.log(this.state.client.redirectUris);
                 tmpArr = this.state.client.redirectUris;
                 tmpArr.splice(index, 1);
-                console.log(tmpArr);
                 this.setState({
                     client: { ...this.state.client, redirectUris: tmpArr }
                 });
@@ -352,7 +347,6 @@ export class ManageClient extends React.Component<ManagePageProps, ManagePageSta
         event.preventDefault();
         const form = event.target as HTMLFormElement;
         const isValid = form.checkValidity();
-        console.log(this.state)
         if (isValid) {
             const reqData = this.state.client;
             // DEBUGGING
