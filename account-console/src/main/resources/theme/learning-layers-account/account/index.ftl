@@ -43,9 +43,7 @@
                 isEditUserNameAllowed : ${realm.editUsernameAllowed?c},
                 isInternationalizationEnabled : ${realm.isInternationalizationEnabled()?c},
                 isLinkedAccountsEnabled : ${realm.identityFederationEnabled?c},
-                isEventsEnabled : ${isEventsEnabled?c},
                 isMyResourcesEnabled : ${(realm.userManagedAccessAllowed && isAuthorizationEnabled)?c},
-                isTotpConfigured : ${isTotpConfigured?c},
                 deleteAccountAllowed : ${deleteAccountAllowed?c},
                 updateEmailFeatureEnabled: ${updateEmailFeatureEnabled?c},
                 updateEmailActionEnabled: ${updateEmailActionEnabled?c},
@@ -108,25 +106,23 @@
         <script>
             var content = <#include "resources/content.json"/>
         </script>
-        
-        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/react-core/dist/styles/base.css"/>
-        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/react-core/dist/styles/app.css"/>
-        <link rel="stylesheet" type="text/css" href="${resourceCommonUrl}/web_modules/@patternfly/patternfly/patternfly-addons.css"/>
-        <link href="${resourceUrl}/public/layout.css" rel="stylesheet"/>
+
+        <link rel="stylesheet" href="${resourceCommonUrl}/node_modules/@patternfly/react-core/dist/styles/base.css"/>
+        <link rel="stylesheet" href="${resourceCommonUrl}/node_modules/@patternfly/patternfly/patternfly-addons.css"/>
+        <link rel="stylesheet" href="${resourceUrl}/public/app.css"/>
+        <link rel="stylesheet" href="${resourceUrl}/public/layout.css"/>
 
         <#if properties.styles?has_content>
             <#list properties.styles?split(' ') as style>
             <link href="${resourceUrl}/${style}" rel="stylesheet"/>
             </#list>
         </#if>
-
-
     </head>
 
     <body>
 
         <script>
-            var keycloak = Keycloak({
+            var keycloak = new Keycloak({
                 authServerUrl: authUrl,
                 realm: realm,
                 clientId: 'account-console'

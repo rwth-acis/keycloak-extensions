@@ -4,7 +4,7 @@
 
 	<groupId>tech4comp</groupId>
 	<artifactId>keycloak-extensions</artifactId>
-	<version>20.0.1</version>
+	<version>23.0.3</version>
 	<packaging>pom</packaging>
 	<name>KEYCLOAK EXTENSIONS: parent</name>
 	<description>Parent</description>
@@ -22,7 +22,7 @@
 		<maven.compiler.target>17</maven.compiler.target>
 
 		<!-- https://mvnrepository.com/artifact/org.keycloak/keycloak-parent -->
-		<keycloak.version>20.0.1</keycloak.version>
+		<keycloak.version>23.0.3</keycloak.version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<!-- https://mvnrepository.com/artifact/org.wildfly.plugins/wildfly-maven-plugin -->
