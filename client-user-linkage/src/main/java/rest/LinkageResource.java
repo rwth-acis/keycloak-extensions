@@ -23,7 +23,7 @@ import org.keycloak.util.JsonSerialization;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
