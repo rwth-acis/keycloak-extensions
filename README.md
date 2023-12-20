@@ -12,7 +12,7 @@ The repository contains the following directories:
   - Directory containing necessary file from official Keycloak repostory for compiling the account-console
   
 ## How to deploy the extensions
-Each extension is deployed in form of a single `.jar`file. The file has to be copied into the `/standalone/deployments` 
+Each extension is deployed in form of a single `.jar`file. The file has to be copied into the `/providers` 
 directory of your Keycloak instance. If your Keycloak instance is running inside a Docker container, the directory is
 located at `/org/jboss/keycloak/standalone/deployments`.
 

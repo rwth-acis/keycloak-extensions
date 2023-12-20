@@ -116,7 +116,7 @@ export class DeviceActivityPage extends React.Component<DeviceActivityPageProps,
     }
 
     private signOutSession = (device: Device, session: Session) => {
-      this.context!.doDelete("/sessions/" + session.id)
+      this.context!.doDelete("/sessions/" + encodeURIComponent(session.id))
           .then (() => {
             this.fetchDevices();
             ContentAlert.success('signedOutSession', [session.browser, device.os]);
@@ -233,19 +233,19 @@ export class DeviceActivityPage extends React.Component<DeviceActivityPageProps,
                     onClick={this.fetchDevices.bind(this)}
                     icon={<SyncAltIcon />}
                   >
-                    Refresh
+                    <Msg msgKey="refresh"/>
                   </Button>
                 </Tooltip>
               </SplitItem>
               <SplitItem>
               <KeycloakContext.Consumer>
-                { (keycloak: KeycloakService) => (
+                { (keycloak) => (
                     this.isShowSignOutAll(this.state.devices) &&
                       <ContinueCancelModal buttonTitle='signOutAllDevices'
                                     buttonId='sign-out-all'
                                     modalTitle='signOutAllDevices'
                                     modalMessage='signOutAllDevicesWarning'
-                                    onContinue={() => this.signOutAll(keycloak)}
+                                    onContinue={() => this.signOutAll(keycloak!)}
                       />
                 )}
               </KeycloakContext.Consumer>

@@ -128,8 +128,8 @@ class SigningInPage extends React.Component<
     }
 
     private getCredentialContainers(): void {
-        this.context!.doGet("/credentials").then(
-            (response: HttpResponse<CredentialContainer[]>) => {
+        this.context!.doGet<CredentialContainer[]>("/credentials").then(
+            (response) => {
                 const allContainers: CredContainerMap = new Map();
                 const containers: CredentialContainer[] = response.data || [];
                 containers.forEach((container) => {
@@ -147,7 +147,7 @@ class SigningInPage extends React.Component<
     }
 
     private handleRemove = (credentialId: string, userLabel: string) => {
-        this.context!.doDelete("/credentials/" + credentialId).then(() => {
+        this.context!.doDelete("/credentials/" + encodeURIComponent(credentialId)).then(() => {
             this.getCredentialContainers();
             ContentAlert.success("successRemovedMessage", [userLabel]);
         });

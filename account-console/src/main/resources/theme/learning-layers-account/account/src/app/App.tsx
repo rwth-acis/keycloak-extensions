@@ -34,8 +34,6 @@ import { KeycloakContext } from './keycloak-service/KeycloakContext';
 declare function toggleReact(): void;
 declare function isWelcomePage(): boolean;
 
-
-
 declare const brandImg: string;
 declare const brandUrl: string;
 
@@ -57,8 +55,6 @@ export class App extends React.Component<AppProps> {
         if (!this.context!.authenticated() && !isWelcomePage()) {
             this.context!.login();
         }
-
-
 
         const Header = (
             <PageHeader
